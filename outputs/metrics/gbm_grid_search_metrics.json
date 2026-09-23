@@ -1,0 +1,65 @@
+{
+    "grid_results": [
+        {
+            "maxDepth": 4,
+            "learnRate": 0.03,
+            "ntrees": 150,
+            "validation_rmse": 7.097167892286386,
+            "validation_mae": 5.010979993031467,
+            "validation_r2": 0.6431658282853943
+        },
+        {
+            "maxDepth": 4,
+            "learnRate": 0.05,
+            "ntrees": 150,
+            "validation_rmse": 6.860766085033755,
+            "validation_mae": 4.772820278752241,
+            "validation_r2": 0.6665417213085509
+        },
+        {
+            "maxDepth": 6,
+            "learnRate": 0.03,
+            "ntrees": 150,
+            "validation_rmse": 6.370594057198148,
+            "validation_mae": 4.342070800045017,
+            "validation_r2": 0.7124878890515247
+        },
+        {
+            "maxDepth": 6,
+            "learnRate": 0.05,
+            "ntrees": 150,
+            "validation_rmse": 5.9283129373823735,
+            "validation_mae": 3.8740455179228057,
+            "validation_r2": 0.7510234066693999
+        },
+        {
+            "maxDepth": 8,
+            "learnRate": 0.03,
+            "ntrees": 150,
+            "validation_rmse": 5.885183392511593,
+            "validation_mae": 3.8494939812149713,
+            "validation_r2": 0.7546329279363525
+        },
+        {
+            "maxDepth": 8,
+            "learnRate": 0.05,
+            "ntrees": 150,
+            "validation_rmse": 5.6061323358686135,
+            "validation_mae": 3.5365295531828402,
+            "validation_r2": 0.777349861482916
+        }
+    ],
+    "best_configuration": {
+        "maxDepth": 8,
+        "learnRate": 0.05,
+        "ntrees": 150,
+        "validation_rmse": 5.6061323358686135,
+        "validation_mae": 3.5365295531828402,
+        "validation_r2": 0.777349861482916
+    },
+    "test_metrics": {
+        "rmse": 5.792489533543726,
+        "mae": 3.552288299559065,
+        "r2": 0.7644053149286961
+    }
+}

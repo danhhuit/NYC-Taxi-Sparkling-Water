@@ -1,0 +1,18 @@
+{
+    "model": "H2O GBM Baseline",
+    "total_rows": 500000,
+    "train_rows": 350089,
+    "validation_rows": 74824,
+    "test_rows": 75087,
+    "features": [
+        "pickup_location",
+        "dropoff_location",
+        "passenger_count",
+        "pickup_hour",
+        "pickup_day_of_week",
+        "is_weekend"
+    ],
+    "rmse": 6.463047110353714,
+    "mae": 4.281237240431095,
+    "r2": 0.7067016522842291
+}

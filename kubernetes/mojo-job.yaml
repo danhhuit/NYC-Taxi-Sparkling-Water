@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: nyc-taxi-mojo-job
+
+spec:
+  backoffLimit: 0
+
+  template:
+    metadata:
+      labels:
+        app: nyc-taxi-mojo
+
+    spec:
+      restartPolicy: Never
+
+      containers:
+        - name: nyc-taxi-mojo
+          image: nyc-taxi-mojo:1.0
+
+          # Dùng image local đã build trên Docker Desktop
+          imagePullPolicy: Never
+
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1"
+
+            limits:
+              memory: "4Gi"
+              cpu: "4"

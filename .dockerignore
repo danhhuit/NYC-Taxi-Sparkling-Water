@@ -1,0 +1,34 @@
+# Python / virtual environment
+.venv/
+__pycache__/
+*.pyc
+
+# Git
+.git/
+.gitignore
+
+# Large raw datasets
+data/raw/
+data/stream/
+data/spark-temp/
+
+# Keep only the batch parquet required by Docker
+data/processed/*
+!data/processed/taxi_batch_input.parquet
+!data/processed/taxi_batch_input.parquet/**
+
+# Outputs generated on host
+outputs/
+
+# Unused project directories for this image
+database/
+docs/
+kubernetes/
+scripts/
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+*.log

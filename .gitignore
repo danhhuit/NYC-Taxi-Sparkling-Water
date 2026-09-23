@@ -1,0 +1,39 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# Big Data datasets
+data/raw/
+data/processed/
+data/stream/
+data/spark-temp/
+
+# Generated outputs
+outputs/logs/
+outputs/predictions/
+outputs/streaming/
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+
+# Spark / Hadoop temp
+spark-warehouse/
+metastore_db/
+derby.log
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Secrets
+.env
+*.secret

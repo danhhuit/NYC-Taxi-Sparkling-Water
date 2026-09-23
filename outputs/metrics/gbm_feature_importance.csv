@@ -1,0 +1,7 @@
+﻿feature,importance,percentage
+pickup_location,0.52163,52.163000000000004
+dropoff_location,0.412256,41.2256
+pickup_hour,0.041352,4.1352
+pickup_day_of_week,0.016244,1.6244
+is_weekend,0.006542,0.6542
+passenger_count,0.001976,0.1976
