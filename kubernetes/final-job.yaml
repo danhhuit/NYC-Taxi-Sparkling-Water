@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nyc-taxi-final-job
+  labels:
+    app: nyc-taxi-final
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: nyc-taxi-final
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: nyc-taxi-final
+          image: nyc-taxi-final:1.0
+          imagePullPolicy: Never
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1"
+            limits:
+              memory: "4Gi"
+              cpu: "4"

@@ -1,0 +1,16 @@
+feature_name,data_type,description,source,used_in_model,leakage_risk
+pickup_location,string,Pickup taxi zone ID,NYC TLC,True,low
+dropoff_location,string,Dropoff taxi zone ID,NYC TLC,True,low
+passenger_count,double,Passenger count (null imputed to 1),NYC TLC,True,low
+pickup_hour,integer,Pickup hour 0-23,derived,True,low
+pickup_day_of_week,integer,Spark day of week 1-7,derived,True,low
+pickup_month,integer,Pickup month,derived,True,low
+is_weekend,integer,Weekend indicator,derived,True,low
+route_id,string,Pickup-dropoff route key,derived,True,low
+pickup_borough,string,Pickup borough,Taxi Zone Lookup,True,low
+dropoff_borough,string,Dropoff borough,Taxi Zone Lookup,True,low
+route_trip_count,long,Route count calculated from train only,train history,True,controlled
+route_avg_duration,double,Route mean duration calculated from train only,train history,True,controlled
+hour_route_avg_duration,double,Route-hour mean duration calculated from train only,train history,True,controlled
+priority_score,integer,Demonstration JDBC metadata,PostgreSQL,False,synthetic
+trip_duration_minutes,double,Regression target,derived target,False,target

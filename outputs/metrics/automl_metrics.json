@@ -1,11 +1,41 @@
 {
-    "model": "H2O AutoML Best Model",
-    "max_models": 6,
-    "xgboost": "excluded",
-    "train_rows": 350089,
-    "validation_rows": 74824,
-    "test_rows": 75087,
-    "rmse": 5.670308760576854,
-    "mae": 3.398387295063223,
-    "r2": 0.7742392761628021
+  "model": "H2O AutoML Best Model",
+  "best_model_id": "StackedEnsemble_AllModels_1_AutoML_1_20261014_112345",
+  "split_strategy": "chronological",
+  "full_rows": {
+    "train": 34327814,
+    "validation": 4231702,
+    "test": 8155303
+  },
+  "sample_rows": {
+    "train": 600000,
+    "validation": 200000,
+    "test": 200000
+  },
+  "features": [
+    "pickup_location",
+    "dropoff_location",
+    "passenger_count",
+    "pickup_hour",
+    "pickup_day_of_week",
+    "pickup_month",
+    "is_weekend",
+    "route_trip_count",
+    "route_avg_duration",
+    "hour_route_avg_duration"
+  ],
+  "max_models": 4,
+  "max_runtime_seconds": 480.0,
+  "excluded_algorithms": [
+    "XGBoost"
+  ],
+  "training_time_seconds": 248.4333929000004,
+  "test_metrics": {
+    "rmse": 7.478147660326714,
+    "mae": 4.64909073605211,
+    "r2": 0.7479032210410126
+  },
+  "rmse": 7.478147660326714,
+  "mae": 4.64909073605211,
+  "r2": 0.7479032210410126
 }

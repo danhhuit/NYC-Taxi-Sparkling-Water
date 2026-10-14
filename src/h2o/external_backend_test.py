@@ -53,11 +53,18 @@ print("=" * 70)
 print("SPARKLING WATER - EXTERNAL BACKEND TEST")
 print("=" * 70)
 
+external_host = os.environ.get("H2O_EXTERNAL_HOST", "127.0.0.1")
+external_port = int(os.environ.get("H2O_EXTERNAL_PORT", "54321"))
+external_cloud = os.environ.get("H2O_EXTERNAL_CLOUD", "nyc_taxi_external")
+
 
 spark = (
     SparkSession.builder
     .appName("NYC-Taxi-External-H2O-Test")
-    .master("local[*]")
+    .master("local[2]")
+    .config("spark.driver.memory", "1g")
+    .config("spark.executor.memory", "1g")
+    .config("spark.sql.shuffle.partitions", "2")
     .getOrCreate()
 )
 
@@ -71,16 +78,16 @@ conf = (
     H2OConf()
     .setExternalClusterMode()
     .useManualClusterStart()
-    .setH2OCluster("127.0.0.1", 54321)
-    .setCloudName("nyc_taxi_external")
+    .setH2OCluster(external_host, external_port)
+    .setCloudName(external_cloud)
 )
 
 hc = H2OContext.getOrCreate(conf)
 
 print()
 print("EXTERNAL H2O CONTEXT CONNECTED SUCCESSFULLY")
-print("H2O CLUSTER: 127.0.0.1:54321")
-print("CLOUD NAME: nyc_taxi_external")
+print(f"H2O CLUSTER: {external_host}:{external_port}")
+print(f"CLOUD NAME: {external_cloud}")
 
 
 # ----------------------------------------------------------

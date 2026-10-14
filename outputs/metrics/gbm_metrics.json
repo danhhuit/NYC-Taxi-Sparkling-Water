@@ -1,0 +1,38 @@
+{
+  "model": "H2O GBM Final Candidate",
+  "split_strategy": "chronological",
+  "full_rows": {
+    "train": 34327814,
+    "validation": 4231702,
+    "test": 8155303
+  },
+  "sample_rows": {
+    "train": 1200000,
+    "validation": 400000,
+    "test": 400000
+  },
+  "features": [
+    "pickup_location",
+    "dropoff_location",
+    "passenger_count",
+    "pickup_hour",
+    "pickup_day_of_week",
+    "pickup_month",
+    "is_weekend",
+    "route_trip_count",
+    "route_avg_duration",
+    "hour_route_avg_duration"
+  ],
+  "parameters": {
+    "ntrees": 150,
+    "maxDepth": 8,
+    "learnRate": 0.05,
+    "sampleRate": 0.8,
+    "colSampleRate": 0.8,
+    "seed": 42
+  },
+  "training_time_seconds": 44.30143510000016,
+  "rmse": 7.466434697589717,
+  "mae": 4.619220158935067,
+  "r2": 0.7469267216592572
+}

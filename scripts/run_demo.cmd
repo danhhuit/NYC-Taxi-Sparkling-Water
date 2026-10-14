@@ -13,7 +13,7 @@ echo STARTING INTEGRATED DEMO...
 echo ============================================
 echo.
 
-python src\22_integrated_demo.py
+python -m src.demo.integrated_demo
 
 if errorlevel 1 (
     echo.

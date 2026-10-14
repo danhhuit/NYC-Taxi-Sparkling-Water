@@ -1,23 +1,50 @@
 {
-    "model": "H2O Deep Learning",
-    "architecture": [
-        64,
-        32
+  "model": "Deep Learning",
+  "split_strategy": "chronological",
+  "full_rows": {
+    "train": 34327814,
+    "validation": 4231702,
+    "test": 8155303
+  },
+  "sample_rows": {
+    "train": 1200000,
+    "validation": 400000,
+    "test": 400000
+  },
+  "features": [
+    "pickup_location",
+    "dropoff_location",
+    "passenger_count",
+    "pickup_hour",
+    "pickup_day_of_week",
+    "pickup_month",
+    "is_weekend",
+    "route_trip_count",
+    "route_avg_duration",
+    "hour_route_avg_duration"
+  ],
+  "parameters": {
+    "hidden": [
+      64,
+      32
     ],
-    "epochs": 20,
-    "total_rows": 500000,
-    "train_rows": 350089,
-    "validation_rows": 74824,
-    "test_rows": 75087,
-    "features": [
-        "pickup_location",
-        "dropoff_location",
-        "passenger_count",
-        "pickup_hour",
-        "pickup_day_of_week",
-        "is_weekend"
-    ],
-    "rmse": 5.932421782517987,
-    "mae": 3.568461374033132,
-    "r2": 0.7528850529894722
+    "epochs": 15,
+    "activation": "Rectifier"
+  },
+  "training_time_seconds": 159.89086660000066,
+  "train_metrics": {
+    "rmse": 5.81276533658952,
+    "mae": 3.866281523995671,
+    "r2": 0.8040345388109351
+  },
+  "validation_metrics": {
+    "rmse": 7.149977157303235,
+    "mae": 4.502575371445094,
+    "r2": 0.7649418016943005
+  },
+  "test_metrics": {
+    "rmse": 7.554203473869125,
+    "mae": 4.727218249019666,
+    "r2": 0.7409419418471879
+  }
 }

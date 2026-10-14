@@ -12,6 +12,7 @@ __pycache__/
 # Big Data datasets
 data/raw/
 data/processed/
+data/flow/
 data/stream/
 data/spark-temp/
 
@@ -19,6 +20,15 @@ data/spark-temp/
 outputs/logs/
 outputs/predictions/
 outputs/streaming/
+
+# Large generated model artifacts (publish with Git LFS or release assets)
+models/final_mojo/
+models/drf_mojo/
+models/automl_best_mojo/
+
+# Spark checksum / success markers
+*.crc
+_SUCCESS
 
 # Temporary files
 *.log
@@ -37,3 +47,6 @@ Thumbs.db
 # Secrets
 .env
 *.secret
+
+# Local PostgreSQL credentials
+config/database.env

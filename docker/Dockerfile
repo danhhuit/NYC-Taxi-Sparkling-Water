@@ -7,7 +7,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 # ==========================================================
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    openjdk-17-jre-headless && \
+    openjdk-17-jre-headless \
+    procps && \
     rm -rf /var/lib/apt/lists/*
 
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
@@ -25,20 +26,26 @@ WORKDIR /app
 RUN pip install --no-cache-dir \
     pyspark==3.5.0 \
     h2o-pysparkling-3.5==3.46.0.6.post1 \
-    numpy==1.26.4
+    numpy==1.26.4 \
+    PyYAML==6.0.2
 
-# MOJO prediction script
-COPY src/20_load_mojo_predict.py src/20_load_mojo_predict.py
+# Final MOJO prediction script and shared configuration
+COPY src/__init__.py src/__init__.py
+COPY src/prediction/__init__.py src/prediction/__init__.py
+COPY src/prediction/final_mojo_score.py src/prediction/final_mojo_score.py
+COPY src/common/__init__.py src/common/__init__.py
+COPY src/common/project.py src/common/project.py
+COPY config/project_config.yaml config/project_config.yaml
 
 # Batch input
-COPY data/processed/taxi_batch_input.parquet \
-    data/processed/taxi_batch_input.parquet
+COPY data/processed/batch_input.parquet \
+    data/processed/test.parquet
 
 # Exported MOJO model
-COPY models/nyc_taxi_gbm_mojo \
-    models/nyc_taxi_gbm_mojo
+COPY models/final_mojo \
+    models/final_mojo
 
 # Output directory
-RUN mkdir -p outputs/predictions
+RUN mkdir -p outputs/predictions outputs/metrics
 
-CMD ["python", "src/20_load_mojo_predict.py"]
+CMD ["python", "-m", "src.prediction.final_mojo_score", "--rows", "0"]

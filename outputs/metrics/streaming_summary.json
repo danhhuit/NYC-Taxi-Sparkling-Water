@@ -1,0 +1,10 @@
+{
+  "batches": 10,
+  "rows": 1000,
+  "null_predictions": 0,
+  "expected_batches": 10,
+  "expected_rows": 1000,
+  "elapsed_seconds": 13.137589200001457,
+  "rows_per_second": 76.1174660568538,
+  "model": "models/final_mojo"
+}

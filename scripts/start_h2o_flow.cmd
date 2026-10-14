@@ -14,7 +14,7 @@ set "H2O_JAR=%CD%\.venv\Lib\site-packages\h2o\backend\bin\h2o.jar"
 set "SW_EXT_JAR=D:\BigData\Tools\SparklingWater\sparkling-water-3.46.0.6-1-3.5\jars\sparkling-water-assembly-extensions_2.12-3.46.0.6-1-3.5-all.jar"
 
 start "NYC TAXI - H2O CLUSTER" cmd /k ^
-java -cp "%H2O_JAR%;%SW_EXT_JAR%" water.H2OApp ^
+java -Xms512m -Xmx2g -cp "%H2O_JAR%;%SW_EXT_JAR%" water.H2OApp ^
 -allow_clients ^
 -name nyc_taxi_external ^
 -ip 127.0.0.1 ^

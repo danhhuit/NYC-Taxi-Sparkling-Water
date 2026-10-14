@@ -1,0 +1,2 @@
+taxi_rows,postgres_rows,matched_rows,unmatched_rows,match_rate,jdbc_status
+46714819,8,10702477,36012342,22.9102,CONNECTED

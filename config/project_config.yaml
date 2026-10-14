@@ -1,0 +1,47 @@
+project:
+  name: NYC Taxi Sparkling Water Final Project
+  timezone: America/New_York
+  random_seed: 42
+
+dataset:
+  start_month: "2025-01"
+  end_month: "2025-12"
+  download_url_template: "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_{month}.parquet"
+  min_duration_minutes: 1
+  max_duration_minutes: 180
+  min_location_id: 1
+  max_location_id: 265
+  min_passenger_count: 1
+  max_passenger_count: 6
+
+split:
+  train_end: "2025-09-30 23:59:59"
+  validation_end: "2025-10-31 23:59:59"
+  test_end: "2025-12-31 23:59:59"
+
+spark:
+  master: "local[4]"
+  driver_memory: "4g"
+  executor_memory: "4g"
+  shuffle_partitions: 96
+
+postgres:
+  host: localhost
+  port: 5432
+  database: nyc_taxi_db
+  user: postgres
+  table: public.zone_statistics
+  password_env: NYC_TAXI_DB_PASSWORD
+
+paths:
+  raw_yellow: data/raw/yellow
+  zone_lookup: data/raw/zones/taxi_zone_lookup.csv
+  clean: data/processed/taxi_clean.parquet
+  features: data/processed/taxi_features.parquet
+  multisource: data/processed/taxi_multisource.parquet
+  train: data/processed/train.parquet
+  validation: data/processed/validation.parquet
+  test: data/processed/test.parquet
+  metrics: outputs/metrics
+  charts: outputs/charts
+  logs: outputs/logs

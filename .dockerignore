@@ -14,8 +14,8 @@ data/spark-temp/
 
 # Keep only the batch parquet required by Docker
 data/processed/*
-!data/processed/taxi_batch_input.parquet
-!data/processed/taxi_batch_input.parquet/**
+!data/processed/batch_input.parquet
+!data/processed/batch_input.parquet/**
 
 # Outputs generated on host
 outputs/
