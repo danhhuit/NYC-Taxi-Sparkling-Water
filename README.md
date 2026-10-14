@@ -368,13 +368,21 @@ outputs/charts/error_by_duration_range.png
 
 ## 14. H2O Flow local
 
-Chuẩn bị hardlink đến toàn bộ Parquet 12 tháng và mở cluster 10 GB:
+Chuẩn bị hardlink đến toàn bộ Parquet 12 tháng và mở cluster với heap 8 GB (cần tối thiểu 10 GB RAM trống):
 
 ```bat
 scripts\start_h2o_flow_full.cmd
 ```
 
-Launcher chạy kiểm tra RAM trước và chỉ khởi động khi còn ít nhất heap yêu cầu cộng 2 GB dự phòng cho Windows. Sau khi cluster đã lên, chạy workflow import/model/screenshot tự động:
+Launcher chạy kiểm tra RAM trước và chỉ khởi động khi còn ít nhất heap yêu cầu cộng 2 GB dự phòng cho Windows. Trên máy Windows hiện tại, launcher tự dùng Java 8 riêng cho H2O standalone để tránh lỗi loopback của Java 17; Spark và phần còn lại của pipeline vẫn dùng Java 17. Script chỉ báo thành công sau khi REST API xác nhận đúng cloud, healthy và có ít nhất một node.
+
+Log khởi động và PID được ghi trong `outputs/logs/`. Dừng cluster bằng:
+
+```bat
+scripts\stop_h2o_flow.cmd
+```
+
+Sau khi cluster đã lên, chạy workflow import/model/screenshot tự động:
 
 ```bat
 .venv\Scripts\python.exe scripts\capture_h2o_flow_full.py
@@ -423,6 +431,8 @@ scripts\run_h2o_external_backend_check.cmd
 ```
 
 Log được lưu tại `outputs/logs/h2o_external_backend.log`.
+
+Các dòng `Failed to delete ... sparkling_water_assembly.jar` lúc Spark thoát là cảnh báo dọn thư mục tạm do Windows còn giữ file JAR, không phải lỗi kiểm tra. Kết quả được xem là đạt khi process trả exit code `0` và log chứa `EXTERNAL BACKEND TEST SUCCESS`.
 
 ## 15. spark-submit
 
@@ -475,6 +485,8 @@ scripts\validate_deployment_after_reboot.cmd
 ```
 
 Script kiểm tra daemon, chạy container, apply lại Job, chờ `Complete` và ghi `docker_final.log`/`kubernetes_final.log`.
+
+Nếu `docker run` báo `metadata.db: read-only file system`, đây là lỗi filesystem của Docker Desktop/containerd chứ không phải lỗi image. Thoát Docker Desktop, chạy `wsl --shutdown` trong PowerShell, khởi động lại Windows rồi mở Docker Desktop trước khi chạy lại script. Không dùng **Clean/Purge data** hoặc **Factory Reset** nếu chưa chấp nhận mất image, container và cluster cục bộ.
 
 Chạy lại Job:
 

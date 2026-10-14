@@ -75,30 +75,58 @@ outputs/logs/docker_final.log
 outputs/logs/kubernetes_final.log
 ```
 
-### 2.4 Nếu Docker vẫn không chạy
+### 2.4 Nếu Docker vẫn không chạy hoặc filesystem bị chỉ đọc
+
+Log mới nhất xác nhận image đã build thành công, nhưng `docker run` thất bại với:
+
+```text
+metadata.db: read-only file system
+```
+
+Sau lỗi này Docker Engine dừng và Kubernetes API không còn lắng nghe. Đây là lỗi Docker Desktop/containerd, không phải lỗi `Dockerfile`, MOJO hoặc code Python.
 
 Mở PowerShell bằng **Run as administrator**:
 
 ```powershell
 wsl --shutdown
-Restart-Service WslService
+Get-Service WslService,LxssManager -ErrorAction SilentlyContinue
 ```
 
-Sau đó mở lại Docker Desktop. Không xóa thư mục Docker và không dùng Factory Reset. Nếu vẫn lỗi, kiểm tra:
+Khởi động lại Windows. Sau khi đăng nhập:
+
+1. Mở Docker Desktop.
+2. Chờ Docker Engine báo **Running**.
+3. Chờ Kubernetes báo **Running**.
+4. Mở Command Prompt và chạy:
+
+   ```bat
+   docker info
+   docker run --rm hello-world
+   kubectl get nodes
+   ```
+
+5. Chỉ khi cả ba lệnh trên thành công mới chạy lại:
+
+   ```bat
+   cd /d D:\BigData\NYC-Taxi-Sparkling-Water
+   scripts\validate_deployment_after_reboot.cmd
+   ```
+
+Không xóa thư mục Docker và không dùng **Clean/Purge data** hoặc **Factory Reset**. Hai lựa chọn này có thể xóa image, container, volume và cluster cục bộ. Nếu vẫn lỗi, lưu kết quả:
 
 ```bat
 docker desktop status
 docker desktop logs --since 10m --priority 2
 ```
 
-Lỗi trước đó là socket bị kẹt:
+Ngoài lỗi filesystem chỉ đọc, máy từng gặp socket bị kẹt:
 
 ```text
 C:\Users\NGUYEN THANH DANH\AppData\Local\docker-secrets-engine\engine.sock
 Windows error 1920
 ```
 
-Windows reboot hoặc restart `WslService` bằng quyền Administrator là cách phục hồi an toàn.
+Nếu lỗi chỉ đọc vẫn còn sau đúng một lần `wsl --shutdown` và reboot, dừng tại đây và gửi hai log trên để quyết định có reset dữ liệu Docker hay không.
 
 ## 3. Hoàn tất external H2O backend
 
@@ -112,8 +140,8 @@ Sau khi Docker/Kubernetes đã xong:
    scripts\start_h2o_flow.cmd
    ```
 
-3. Giữ cửa sổ H2O mở.
-4. Mở Command Prompt thứ hai:
+3. Chờ cửa sổ in đủ `H2O READY`, cloud name `nyc_taxi_external` và `Cloud size : 1`.
+4. Script chạy H2O nền và tự mở Flow; không cần giữ một cửa sổ Java riêng. Trong Command Prompt, chạy:
 
    ```bat
    cd /d D:\BigData\NYC-Taxi-Sparkling-Water
@@ -135,7 +163,13 @@ Log được ghi tại:
 outputs/logs/h2o_external_backend.log
 ```
 
-Sau khi thành công, quay lại cửa sổ H2O và nhấn `Ctrl+C` để dừng cluster.
+Các cảnh báo `Failed to delete ... sparkling_water_assembly.jar` ở cuối là cảnh báo dọn file tạm trên Windows và không làm bài kiểm tra thất bại.
+
+Sau khi thành công, dừng cluster:
+
+```bat
+scripts\stop_h2o_flow.cmd
+```
 
 ## 4. Hoàn tất H2O Flow với toàn bộ 46.714.819 dòng
 
@@ -165,7 +199,7 @@ Nếu máy vẫn dưới 10 GB trống, khởi động lại Windows rồi chạ
 
 ### 4.2 Khởi động cluster và chạy workflow
 
-Command Prompt thứ nhất:
+Command Prompt:
 
 ```bat
 cd /d D:\BigData\NYC-Taxi-Sparkling-Water
@@ -173,7 +207,14 @@ set "H2O_HEAP_GB=8"
 scripts\start_h2o_flow_full.cmd
 ```
 
-Giữ cửa sổ cluster mở. Khi `http://127.0.0.1:54321` truy cập được, mở Command Prompt thứ hai:
+Chờ script in `H2O READY`. Cluster chạy nền và log được ghi tại:
+
+```text
+outputs/logs/h2o_nyc_taxi_full_12_months.out.log
+outputs/logs/h2o_nyc_taxi_full_12_months.err.log
+```
+
+Sau đó chạy:
 
 ```bat
 cd /d D:\BigData\NYC-Taxi-Sparkling-Water
@@ -216,7 +257,11 @@ Mở từng ảnh và xác nhận:
 - Metrics và Variable Importance hiển thị.
 - Frame prediction có cột `predict`.
 
-Sau đó nhấn `Ctrl+C` trong cửa sổ H2O.
+Sau đó dừng H2O:
+
+```bat
+scripts\stop_h2o_flow.cmd
+```
 
 ## 5. Kiểm tra cuối cùng
 

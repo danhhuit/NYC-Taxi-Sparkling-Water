@@ -4,10 +4,11 @@ chcp 65001 >nul
 
 call "%~dp0activate_project.cmd"
 
-netstat -ano | findstr /R /C:":54321 .*LISTENING" >nul
+powershell -NoProfile -Command "$ErrorActionPreference='Stop'; $c=Invoke-RestMethod -Uri 'http://127.0.0.1:54321/3/Cloud' -TimeoutSec 5; if (-not $c.cloud_healthy -or $c.cloud_name -ne 'nyc_taxi_external') { exit 1 }" >nul 2>&1
 if errorlevel 1 (
-    echo H2O is not listening on port 54321.
-    echo Start scripts\start_h2o_flow.cmd first; it creates cloud nyc_taxi_external.
+    echo H2O cloud nyc_taxi_external is not healthy on port 54321.
+    echo Run scripts\start_h2o_flow.cmd first.
+    echo If startup fails, inspect outputs\logs\h2o_nyc_taxi_external.*.log.
     exit /b 1
 )
 
@@ -18,4 +19,9 @@ echo Running external Sparkling Water backend check. Output: outputs\logs\h2o_ex
 set "CHECK_EXIT=%ERRORLEVEL%"
 
 type "outputs\logs\h2o_external_backend.log"
+if "%CHECK_EXIT%"=="0" (
+    echo.
+    echo EXTERNAL BACKEND VALIDATION PASSED
+    echo Windows JAR cleanup warnings, if shown above, are non-fatal.
+)
 exit /b %CHECK_EXIT%

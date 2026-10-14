@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+.jython_cache/
 
 # IDE
 .vscode/
