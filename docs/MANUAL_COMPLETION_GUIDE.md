@@ -36,12 +36,13 @@ Script sẽ:
 2. Build lại image `nyc-taxi-final:1.0` từ source mới nhất.
 3. Chạy Docker scoring container.
 4. Kiểm tra Kubernetes context và node.
-5. Xóa Job cũ nếu có.
-6. Apply `kubernetes\final-job.yaml`.
-7. Chờ Job `nyc-taxi-final-job` hoàn thành tối đa 30 phút.
-8. Ghi log Docker và Kubernetes.
+5. Stream image Docker vào containerd riêng của node Kubernetes `kind`.
+6. Xóa Job cũ nếu có.
+7. Apply `kubernetes\final-job.yaml`.
+8. Chờ Job `nyc-taxi-final-job` hoàn thành tối đa 30 phút.
+9. Ghi log Docker và Kubernetes.
 
-Không đóng cửa sổ khi container đang chấm điểm. Batch trong image chứa toàn bộ 8.155.303 dòng test nên có thể mất nhiều phút.
+Không đóng cửa sổ khi container đang chấm điểm. Batch trong image chứa toàn bộ 8.155.303 dòng test nên có thể mất nhiều phút. Container dùng chế độ deployment validation: chấm đủ mọi dòng và kiểm tra prediction null nhưng không ghi lại các Parquet lớn vào filesystem tạm của container.
 
 ### 2.3 Tiêu chí thành công
 

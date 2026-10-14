@@ -43,6 +43,15 @@ def main() -> int:
         default=0,
         help="Maximum rows to score; 0 means every row in the test split.",
     )
+    parser.add_argument(
+        "--deployment-validation",
+        action="store_true",
+        help=(
+            "Score and validate every requested row without exporting the large "
+            "batch/prediction Parquet datasets. Intended for ephemeral Docker "
+            "and Kubernetes validation containers."
+        ),
+    )
     args = parser.parse_args()
     config = load_config(args.config)
     normalize_pysparkling_jars()
@@ -61,8 +70,9 @@ def main() -> int:
     source = spark.read.parquet(spark_path(config["paths"]["test"]))
     batch = (source.limit(args.rows) if args.rows > 0 else source).cache()
     batch_count = batch.count()
-    batch_path = project_path("data/processed/batch_input.parquet")
-    batch.write.mode("overwrite").parquet(batch_path.resolve().as_posix())
+    if not args.deployment_validation:
+        batch_path = project_path("data/processed/batch_input.parquet")
+        batch.write.mode("overwrite").parquet(batch_path.resolve().as_posix())
 
     model_path = project_path("models/final_mojo").resolve()
     model = H2OMOJOModel.read().load(model_path.as_uri())
@@ -87,12 +97,14 @@ def main() -> int:
         "scoring_time_seconds": scoring_time,
         "rows_per_second": prediction_count / scoring_time if scoring_time else None,
         "h2o_context_used": False,
+        "deployment_validation": args.deployment_validation,
     }
 
-    output_path = project_path("outputs/predictions/batch_predictions")
-    predictions.write.mode("overwrite").parquet(output_path.resolve().as_posix())
-    mojo_output_path = project_path("outputs/predictions/mojo_predictions")
-    predictions.write.mode("overwrite").parquet(mojo_output_path.resolve().as_posix())
+    if not args.deployment_validation:
+        output_path = project_path("outputs/predictions/batch_predictions")
+        predictions.write.mode("overwrite").parquet(output_path.resolve().as_posix())
+        mojo_output_path = project_path("outputs/predictions/mojo_predictions")
+        predictions.write.mode("overwrite").parquet(mojo_output_path.resolve().as_posix())
     sample_columns = [
         "pickup_location",
         "dropoff_location",
@@ -117,7 +129,11 @@ def main() -> int:
         json.dump(summary, stream, indent=2, ensure_ascii=False)
 
     print(json.dumps(summary, indent=2, ensure_ascii=False))
-    print("FINAL MOJO SCORING SUCCESS")
+    print(
+        "FINAL MOJO DEPLOYMENT VALIDATION SUCCESS"
+        if args.deployment_validation
+        else "FINAL MOJO SCORING SUCCESS"
+    )
     predictions.unpersist()
     batch.unpersist()
     spark.stop()

@@ -466,6 +466,8 @@ docker rm nyc-taxi-final-demo
 
 Image chứa MOJO và batch input được chuẩn bị tại thời điểm build. Vì vậy cần chạy MOJO scoring/chuẩn bị batch input trước khi build image.
 
+Container chạy chế độ `--deployment-validation`: vẫn chấm và kiểm tra toàn bộ 8.155.303 dòng nhưng không ghi lại các Parquet lớn vào filesystem tạm sẽ bị xóa khi container kết thúc. Summary, mẫu dự đoán và dấu hiệu thành công vẫn được tạo/in ra log. Việc chạy trực tiếp `scripts\run_final_mojo_scoring.cmd` trên máy vẫn xuất đầy đủ các bộ predictions.
+
 ## 17. Kubernetes
 
 Trong Docker Desktop, bật **Settings → Kubernetes → Enable Kubernetes** và chờ node `Ready`.
@@ -496,6 +498,8 @@ kubectl apply -f kubernetes\final-job.yaml
 ```
 
 Manifest dùng `imagePullPolicy: Never`, do đó image `nyc-taxi-final:1.0` phải tồn tại trong Docker Desktop trước khi apply.
+
+Docker Desktop dùng Kubernetes chế độ `kind`, có containerd image store riêng với Docker Engine. Script validation tự stream image vào node bằng `scripts\load_image_into_docker_desktop_kubernetes.cmd` trước khi tạo Job; vì image khoảng 2,5 GB, bước này có thể mất vài phút.
 
 ## 18. Integrated Demo
 

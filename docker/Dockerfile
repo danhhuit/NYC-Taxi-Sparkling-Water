@@ -48,4 +48,4 @@ COPY models/final_mojo \
 # Output directory
 RUN mkdir -p outputs/predictions outputs/metrics
 
-CMD ["python", "-m", "src.prediction.final_mojo_score", "--rows", "0"]
+CMD ["python", "-m", "src.prediction.final_mojo_score", "--rows", "0", "--deployment-validation"]

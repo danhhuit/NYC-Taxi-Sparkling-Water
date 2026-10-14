@@ -23,7 +23,7 @@ if not exist "%LOG_DIR%" mkdir "%LOG_DIR%"
 >> "%KUBERNETES_LOG%" echo Expected Job: %JOB%
 >> "%KUBERNETES_LOG%" echo.
 
-echo [1/7] Checking Docker daemon...
+echo [1/8] Checking Docker daemon...
 docker version >> "%DOCKER_LOG%" 2>&1
 if errorlevel 1 (
     >> "%DOCKER_LOG%" echo.
@@ -33,7 +33,7 @@ if errorlevel 1 (
     exit /b 10
 )
 
-echo [2/7] Building current Docker image...
+echo [2/8] Building current Docker image...
 docker build -f docker\Dockerfile -t "%IMAGE%" . >> "%DOCKER_LOG%" 2>&1
 if errorlevel 1 (
     >> "%DOCKER_LOG%" echo FAILED: docker build
@@ -41,7 +41,7 @@ if errorlevel 1 (
     exit /b 11
 )
 
-echo [3/7] Running Docker scoring container...
+echo [3/8] Running Docker scoring container...
 docker run --rm --name "%CONTAINER%" "%IMAGE%" >> "%DOCKER_LOG%" 2>&1
 set "DOCKER_RC=!ERRORLEVEL!"
 >> "%DOCKER_LOG%" echo.
@@ -53,19 +53,27 @@ if not "!DOCKER_RC!"=="0" (
 )
 >> "%DOCKER_LOG%" echo DOCKER FINAL VALIDATION SUCCESS
 
-echo [4/7] Checking Kubernetes context and node...
+echo [4/8] Checking Kubernetes context and node...
 kubectl config current-context >> "%KUBERNETES_LOG%" 2>&1
 if errorlevel 1 goto :kubernetes_unavailable
 kubectl get nodes -o wide >> "%KUBERNETES_LOG%" 2>&1
 if errorlevel 1 goto :kubernetes_unavailable
 
-echo [5/7] Recreating Job %JOB%...
+echo [5/8] Loading Docker image into Kubernetes containerd...
+call scripts\load_image_into_docker_desktop_kubernetes.cmd "%IMAGE%" >> "%KUBERNETES_LOG%" 2>&1
+if errorlevel 1 (
+    >> "%KUBERNETES_LOG%" echo FAILED: Could not load Docker image into Kubernetes containerd.
+    echo FAILED: Kubernetes image import. See "%KUBERNETES_LOG%".
+    exit /b 23
+)
+
+echo [6/8] Recreating Job %JOB%...
 kubectl delete job "%JOB%" --ignore-not-found=true --wait=true >> "%KUBERNETES_LOG%" 2>&1
 if errorlevel 1 goto :kubernetes_failed
 kubectl apply -f kubernetes\final-job.yaml >> "%KUBERNETES_LOG%" 2>&1
 if errorlevel 1 goto :kubernetes_failed
 
-echo [6/7] Waiting up to 30 minutes for completion...
+echo [7/8] Waiting up to 30 minutes for completion...
 kubectl wait --for=condition=complete "job/%JOB%" --timeout=30m >> "%KUBERNETES_LOG%" 2>&1
 if errorlevel 1 (
     >> "%KUBERNETES_LOG%" echo.
@@ -78,7 +86,7 @@ if errorlevel 1 (
     exit /b 20
 )
 
-echo [7/7] Saving Kubernetes evidence...
+echo [8/8] Saving Kubernetes evidence...
 kubectl get job "%JOB%" -o wide >> "%KUBERNETES_LOG%" 2>&1
 kubectl get pods -l app=nyc-taxi-final -o wide >> "%KUBERNETES_LOG%" 2>&1
 kubectl logs "job/%JOB%" --all-containers=true >> "%KUBERNETES_LOG%" 2>&1
