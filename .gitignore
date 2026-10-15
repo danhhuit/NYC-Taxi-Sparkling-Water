@@ -21,6 +21,8 @@ data/spark-temp/
 outputs/logs/
 outputs/predictions/
 outputs/streaming/
+outputs/tmp/
+outputs/screenshots/*_current.png
 
 # Large generated model artifacts (publish with Git LFS or release assets)
 models/final_mojo/

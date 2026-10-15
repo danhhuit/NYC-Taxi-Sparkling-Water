@@ -1,6 +1,6 @@
 {
   "model": "H2O AutoML Best Model",
-  "best_model_id": "StackedEnsemble_AllModels_1_AutoML_1_20261014_112345",
+  "best_model_id": "StackedEnsemble_AllModels_1_AutoML_1_20261014_165535",
   "split_strategy": "chronological",
   "full_rows": {
     "train": 34327814,
@@ -29,7 +29,7 @@
   "excluded_algorithms": [
     "XGBoost"
   ],
-  "training_time_seconds": 248.4333929000004,
+  "training_time_seconds": 372.9738401000013,
   "test_metrics": {
     "rmse": 7.478147660326714,
     "mae": 4.64909073605211,

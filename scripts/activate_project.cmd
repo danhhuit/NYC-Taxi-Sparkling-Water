@@ -10,6 +10,8 @@ set "HADOOP_CONF_DIR=%HADOOP_HOME%\conf"
 set "TEMP=D:\BigData\Temp"
 set "TMP=D:\BigData\Temp"
 set "PIP_CACHE_DIR=D:\BigData\pip-cache"
+set "PYTHONUTF8=1"
+set "PYTHONIOENCODING=utf-8"
 
 set "JAVA_TOOL_OPTIONS=-Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 --add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED --add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED"
 

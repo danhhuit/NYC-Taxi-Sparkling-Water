@@ -1,0 +1,1679 @@
+<!doctype html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <title>NYC Taxi Analytics</title>
+  <style>
+    :root {
+      --bg: #f7f7f5;
+      --surface: #fff;
+      --surface-2: #efefec;
+      --ink: #101010;
+      --muted: #656565;
+      --line: #d5d5d0;
+      --strong-line: #101010;
+      --inverse: #fff;
+      --chart: #151515;
+      --chart-soft: #818181;
+      --font: "Segoe UI Variable", "Segoe UI", Tahoma, Arial, sans-serif;
+      --sidebar: 250px;
+    }
+    html[data-theme="dark"] {
+      --bg: #0d0d0d;
+      --surface: #151515;
+      --surface-2: #202020;
+      --ink: #f5f5f3;
+      --muted: #adadad;
+      --line: #383838;
+      --strong-line: #f5f5f3;
+      --inverse: #0b0b0b;
+      --chart: #f1f1ef;
+      --chart-soft: #888;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, select { color: inherit; font: inherit; }
+    button, select, summary { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible,
+    [tabindex="0"]:focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 3px;
+    }
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      inset: 0 auto 0 0;
+      padding: 26px 20px 20px;
+      position: fixed;
+      width: var(--sidebar);
+      z-index: 50;
+    }
+    .sidebar-toggle-row {
+      border-bottom: 1px solid var(--strong-line);
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+    }
+    .sidebar-toggle {
+      background: var(--surface);
+      border: 1px solid var(--strong-line);
+      font-size: 12px;
+      font-weight: 800;
+      height: 34px;
+      letter-spacing: -.08em;
+      width: 44px;
+    }
+    .sidebar-toggle:hover { background: var(--ink); color: var(--inverse); }
+    .nav-label, .utility-label {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .16em;
+      margin: 0 8px 10px;
+      text-transform: uppercase;
+    }
+    .nav-list { display: grid; gap: 4px; }
+    .nav-link {
+      align-items: center;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      display: flex;
+      font-size: 12px;
+      gap: 12px;
+      padding: 11px 10px;
+      text-align: left;
+      text-decoration: none;
+      transition: background .16s ease, color .16s ease;
+      width: 100%;
+    }
+    .nav-link:hover, .nav-link.active { background: var(--surface-2); color: var(--ink); }
+    .nav-icon {
+      border: 1px solid currentColor;
+      display: grid;
+      font-size: 9px;
+      height: 23px;
+      place-items: center;
+      width: 23px;
+    }
+    .sidebar-utils { border-top: 1px solid var(--line); margin-top: auto; padding-top: 18px; }
+    .utility-grid { display: grid; gap: 7px; grid-template-columns: repeat(3, 1fr); }
+    .utility-button {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      min-height: 45px;
+      padding: 6px;
+    }
+    .utility-button:hover { border-color: var(--strong-line); }
+    .utility-button strong { display: block; font-size: 12px; font-weight: 600; }
+    .utility-button small { color: var(--muted); font-size: 8px; text-transform: uppercase; }
+    .sidebar-foot { color: var(--muted); font-size: 9px; margin-top: 16px; padding: 0 8px; }
+    .mobile-bar { display: none; }
+    .main { margin-left: var(--sidebar); min-height: 100vh; }
+    .sidebar.collapsed { padding-left: 14px; padding-right: 14px; width: 72px; }
+    .sidebar.collapsed .nav-label,
+    .sidebar.collapsed .nav-link span:last-child,
+    .sidebar.collapsed .utility-label,
+    .sidebar.collapsed .utility-button small,
+    .sidebar.collapsed .sidebar-foot { display: none; }
+    .sidebar.collapsed .nav-link { justify-content: center; padding-left: 0; padding-right: 0; }
+    .sidebar.collapsed .utility-grid { grid-template-columns: 1fr; }
+    .sidebar.collapsed .sidebar-toggle-row { justify-content: center; }
+    .main.sidebar-collapsed { margin-left: 72px; }
+    .page {
+      display: flex;
+      flex-direction: column;
+      margin: 0 auto;
+      max-width: 1480px;
+      padding: 38px 42px 90px;
+    }
+    .page-header { order: 1; }
+    #prediction { order: 2; margin-top: 8px; }
+    #data { order: 3; }
+    #quality { order: 4; }
+    #models { order: 5; }
+    #errors { order: 6; }
+    #history { order: 7; }
+    .page-header {
+      align-items: flex-end;
+      display: flex;
+      gap: 36px;
+      justify-content: space-between;
+      margin-bottom: 34px;
+    }
+    .eyebrow, .section-kicker {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+    h1 {
+      font-size: clamp(34px, 4.5vw, 66px);
+      font-weight: 500;
+      letter-spacing: -.055em;
+      line-height: .98;
+      margin: 11px 0 14px;
+    }
+    .header-copy { color: var(--muted); margin: 0; max-width: 700px; }
+    .filter-box { min-width: 230px; }
+    .field-label {
+      display: block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .15em;
+      margin-bottom: 7px;
+      text-transform: uppercase;
+    }
+    select, input {
+      appearance: none;
+      background: var(--surface);
+      border: 1px solid var(--strong-line);
+      border-radius: 0;
+      height: 48px;
+      padding: 0 14px;
+      width: 100%;
+    }
+    select {
+      background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%),
+        linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+      background-position: calc(100% - 18px) 20px, calc(100% - 13px) 20px;
+      background-repeat: no-repeat;
+      background-size: 5px 5px, 5px 5px;
+      padding-right: 36px;
+    }
+    .kpi-grid {
+      border: 1px solid var(--strong-line);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      margin-bottom: 28px;
+    }
+    .kpi { background: var(--surface); min-height: 128px; padding: 22px 24px; }
+    .kpi + .kpi { border-left: 1px solid var(--strong-line); }
+    .kpi-label {
+      color: var(--muted);
+      display: block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .kpi-value {
+      display: block;
+      font-size: clamp(25px, 2.7vw, 39px);
+      font-weight: 500;
+      letter-spacing: -.045em;
+      margin-top: 20px;
+    }
+    .kpi-meta { color: var(--muted); display: block; font-size: 10px; margin-top: 2px; }
+    .section { border-top: 1px solid var(--strong-line); margin-top: 54px; padding-top: 24px; }
+    .section-header {
+      align-items: flex-end;
+      display: flex;
+      gap: 24px;
+      justify-content: space-between;
+      margin-bottom: 25px;
+    }
+    .section-title-row, .card-title-row {
+      align-items: center;
+      display: flex;
+      gap: 10px;
+    }
+    .info-button {
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--strong-line);
+      border-radius: 50%;
+      display: inline-flex;
+      flex: 0 0 auto;
+      font-size: 11px;
+      font-weight: 800;
+      height: 25px;
+      justify-content: center;
+      padding: 0;
+      width: 25px;
+    }
+    .info-button:hover, .info-button:focus-visible { background: var(--ink); color: var(--inverse); }
+    h2 {
+      font-size: clamp(25px, 3vw, 38px);
+      font-weight: 500;
+      letter-spacing: -.045em;
+      line-height: 1.05;
+      margin: 7px 0 0;
+    }
+    .section-note { color: var(--muted); font-size: 11px; max-width: 420px; text-align: right; }
+    .two-column { display: grid; gap: 20px; grid-template-columns: minmax(0, 1.45fr) minmax(300px, .55fr); }
+    .equal-column { display: grid; gap: 20px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .card { background: var(--surface); border: 1px solid var(--line); min-width: 0; padding: 20px; }
+    .card-title {
+      align-items: center;
+      display: flex;
+      font-size: 10px;
+      font-weight: 700;
+      justify-content: space-between;
+      letter-spacing: .12em;
+      margin-bottom: 18px;
+      text-transform: uppercase;
+    }
+    .chart { min-height: 330px; overflow: hidden; position: relative; }
+    .chart svg { display: block; height: auto; max-width: 100%; overflow: visible; width: 100%; }
+    .chart text { fill: var(--muted); font-family: var(--font); font-size: 10px; }
+    .chart .axis { stroke: var(--line); stroke-width: 1; }
+    .chart .bar {
+      animation: grow-bar-y .65s cubic-bezier(.2,.75,.25,1) both;
+      fill: var(--chart);
+      transform-box: fill-box;
+      transform-origin: bottom;
+      transition: opacity .14s ease;
+    }
+    .chart .bar.horizontal { animation-name: grow-bar-x; transform-origin: left; }
+    .chart .bar:hover, .chart .point:hover { opacity: .62; }
+    .chart .point { animation: fade-up .55s ease both; fill: var(--surface); stroke: var(--chart); stroke-width: 3; }
+    .chart .point.selected { fill: var(--chart); }
+    .chart .line {
+      animation: draw-line .9s ease both;
+      fill: none;
+      stroke: var(--chart);
+      stroke-dasharray: 2200;
+      stroke-dashoffset: 2200;
+      stroke-width: 2;
+    }
+    .chart .value-label { animation: fade-up .7s .2s ease both; fill: var(--ink); font-size: 9px; font-weight: 700; }
+    .empty-state { color: var(--muted); display: grid; min-height: 220px; place-items: center; }
+    .month-detail { display: grid; gap: 0; }
+    .detail-row {
+      align-items: baseline;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 18px;
+      justify-content: space-between;
+      padding: 13px 0;
+    }
+    .detail-row:first-child { padding-top: 0; }
+    .detail-row:last-child { border-bottom: 0; }
+    .detail-row span { color: var(--muted); font-size: 10px; text-transform: uppercase; }
+    .detail-row strong { font-size: 13px; font-weight: 600; text-align: right; }
+    .table-card { margin-top: 20px; overflow: hidden; padding: 0; }
+    .table-scroll { overflow: auto; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border-bottom: 1px solid var(--line); padding: 13px 16px; text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child { text-align: left; }
+    th {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    td { font-size: 11px; }
+    tr:last-child td { border-bottom: 0; }
+    tr.is-selected { background: var(--surface-2); }
+    .quality-grid { display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr); }
+    .quality-item { background: var(--surface-2); min-height: 105px; padding: 16px; }
+    .quality-item span { color: var(--muted); display: block; font-size: 9px; text-transform: uppercase; }
+    .quality-item strong { display: block; font-size: 23px; font-weight: 500; margin-top: 12px; }
+    .split-bar { display: flex; height: 56px; margin: 34px 0 22px; width: 100%; }
+    .split-segment { border: 1px solid var(--surface); position: relative; transition: opacity .14s ease; }
+    .split-segment:nth-child(1) { background: var(--ink); }
+    .split-segment:nth-child(2) { background: var(--chart-soft); }
+    .split-segment:nth-child(3) { background: var(--line); }
+    .split-segment:hover { opacity: .66; }
+    .legend { display: grid; gap: 9px; }
+    .legend-row { align-items: center; display: grid; font-size: 11px; grid-template-columns: 12px 1fr auto; gap: 9px; }
+    .legend-swatch { background: var(--ink); height: 9px; width: 9px; }
+    .legend-row:nth-child(2) .legend-swatch { background: var(--chart-soft); }
+    .legend-row:nth-child(3) .legend-swatch { background: var(--line); border: 1px solid var(--muted); }
+    .segmented-control, .tab-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      min-height: 34px;
+      padding: 7px 11px;
+      text-transform: uppercase;
+    }
+    .chip:hover, .chip.active { background: var(--ink); border-color: var(--ink); color: var(--inverse); }
+    .status-grid { display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr); }
+    .status-card { border: 1px solid var(--line); min-height: 135px; padding: 18px; }
+    .status-head { align-items: center; display: flex; justify-content: space-between; }
+    .status-name { font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .status-badge {
+      border: 1px solid var(--strong-line);
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      padding: 5px 7px;
+      text-transform: uppercase;
+    }
+    .status-value { display: block; font-size: 22px; font-weight: 500; margin-top: 22px; }
+    .status-copy { color: var(--muted); display: block; font-size: 10px; margin-top: 4px; }
+    .model-controls { align-items: flex-end; display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; }
+    .model-filter { min-width: 190px; }
+    .model-filter select { height: 34px; font-size: 10px; padding-top: 0; padding-bottom: 0; }
+    .model-evaluation-grid { display: grid; gap: 20px; grid-template-columns: 1fr; }
+    .all-metrics-grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
+    .all-metric-panel { border: 1px solid var(--line); padding: 12px; }
+    .all-metric-title { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .prediction-layout { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr) minmax(280px, .65fr); }
+    form { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .full-field { grid-column: 1 / -1; }
+    label input, label select { margin-top: 7px; }
+    details { border: 1px solid var(--line); grid-column: 1 / -1; padding: 15px; }
+    summary { font-size: 9px; font-weight: 700; letter-spacing: .12em; list-style: none; text-transform: uppercase; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "+"; float: right; font-size: 16px; }
+    details[open] summary::after { content: "−"; }
+    details label { display: block; margin-top: 14px; }
+    .primary-button {
+      align-items: center;
+      background: var(--ink);
+      border: 1px solid var(--ink);
+      color: var(--inverse);
+      display: flex;
+      font-size: 10px;
+      font-weight: 700;
+      gap: 10px;
+      grid-column: 1 / -1;
+      height: 52px;
+      justify-content: center;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .primary-button:hover:not(:disabled) { background: var(--surface); color: var(--ink); }
+    .primary-button:disabled { cursor: wait; opacity: .65; }
+    .button-spinner {
+      animation: spin .7s linear infinite;
+      border: 2px solid currentColor;
+      border-radius: 50%;
+      border-right-color: transparent;
+      display: none;
+      height: 15px;
+      width: 15px;
+    }
+    .primary-button.is-loading .button-spinner { display: block; }
+    .prediction-result {
+      background: var(--ink);
+      color: var(--inverse);
+      display: grid;
+      min-height: 100%;
+      padding: 28px;
+      place-content: center;
+      text-align: center;
+    }
+    .prediction-result .result-label { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
+    .prediction-result strong { display: block; font-size: clamp(35px, 4vw, 55px); font-weight: 500; letter-spacing: -.05em; margin: 11px 0; }
+    .prediction-result small { color: var(--gray-400); }
+    .prediction-result.error { background: var(--surface); border: 1px solid var(--strong-line); color: var(--ink); }
+    .model-objectivity {
+      border-top: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, 1fr);
+      margin-top: 20px;
+      padding-top: 18px;
+    }
+    .model-objectivity span { display: block; font-size: 8px; letter-spacing: .1em; text-transform: uppercase; }
+    .model-objectivity b { display: block; font-size: 17px; margin-top: 4px; }
+    .history-actions { display: flex; gap: 8px; }
+    .history-pagination {
+      align-items: center;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      padding: 12px 16px;
+    }
+    .history-pagination.bottom { border-bottom: 0; border-top: 1px solid var(--line); }
+    .page-buttons { align-items: center; display: flex; gap: 5px; }
+    .page-button {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      height: 31px;
+      min-width: 31px;
+      padding: 0 8px;
+    }
+    .page-button:hover:not(:disabled) { background: var(--ink); color: var(--inverse); }
+    .page-button:disabled { cursor: default; opacity: .35; }
+    .page-status { color: var(--muted); font-size: 10px; margin: 0 7px; white-space: nowrap; }
+    .page-size-control { align-items: center; display: flex; font-size: 9px; gap: 8px; letter-spacing: .08em; text-transform: uppercase; }
+    .page-size-control input { height: 31px; margin: 0; padding: 0 8px; width: 70px; }
+    .secondary-button {
+      background: var(--surface);
+      border: 1px solid var(--strong-line);
+      font-size: 9px;
+      font-weight: 700;
+      min-height: 34px;
+      padding: 7px 12px;
+      text-transform: uppercase;
+    }
+    .secondary-button:hover { background: var(--ink); color: var(--inverse); }
+    .history-empty { color: var(--muted); padding: 30px; text-align: center; }
+    .info-dialog {
+      align-items: center;
+      background: rgba(0, 0, 0, .58);
+      display: none;
+      inset: 0;
+      justify-content: center;
+      padding: 20px;
+      position: fixed;
+      z-index: 400;
+    }
+    .info-dialog.open { display: flex; }
+    .info-panel {
+      background: var(--surface);
+      border: 1px solid var(--strong-line);
+      max-height: min(720px, calc(100vh - 40px));
+      max-width: 650px;
+      overflow: auto;
+      padding: 24px;
+      width: 100%;
+    }
+    .info-panel-head { align-items: center; border-bottom: 1px solid var(--line); display: flex; gap: 20px; justify-content: space-between; padding-bottom: 15px; }
+    .info-panel h3 { font-size: 23px; font-weight: 500; letter-spacing: -.03em; margin: 0; }
+    .info-close { background: var(--surface); border: 1px solid var(--strong-line); font-size: 18px; height: 34px; width: 34px; }
+    .info-close:hover { background: var(--ink); color: var(--inverse); }
+    .info-list { display: grid; gap: 0; list-style: none; margin: 10px 0 0; padding: 0; }
+    .info-list li { border-bottom: 1px solid var(--line); display: grid; gap: 4px; padding: 12px 0; }
+    .info-list li:last-child { border-bottom: 0; }
+    .info-list b { font-size: 10px; letter-spacing: .06em; overflow-wrap: anywhere; }
+    .info-list span { color: var(--muted); font-size: 11px; }
+    .tooltip {
+      background: var(--ink);
+      color: var(--inverse);
+      font-size: 11px;
+      max-width: 290px;
+      opacity: 0;
+      padding: 10px 12px;
+      pointer-events: none;
+      position: fixed;
+      transform: translate(12px, 12px);
+      transition: opacity .1s ease;
+      z-index: 200;
+    }
+    .tooltip.visible { opacity: 1; }
+    .tooltip b { display: block; font-size: 12px; margin-bottom: 4px; }
+    .loading-overlay {
+      align-items: center;
+      backdrop-filter: blur(3px);
+      background: color-mix(in srgb, var(--bg) 91%, transparent);
+      display: flex;
+      inset: 0;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      position: fixed;
+      transition: opacity .15s ease;
+      z-index: 300;
+    }
+    .loading-overlay.active { opacity: 1; pointer-events: all; }
+    .loading-content { display: grid; gap: 15px; justify-items: center; }
+    .spinner {
+      animation: spin .75s linear infinite;
+      border: 2px solid var(--line);
+      border-radius: 50%;
+      border-top-color: var(--ink);
+      height: 34px;
+      width: 34px;
+    }
+    .loading-text { font-size: 9px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
+    .toast {
+      background: var(--ink);
+      bottom: 24px;
+      color: var(--inverse);
+      font-size: 11px;
+      opacity: 0;
+      padding: 12px 16px;
+      pointer-events: none;
+      position: fixed;
+      right: 24px;
+      transform: translateY(10px);
+      transition: .18s ease;
+      z-index: 250;
+    }
+    .toast.visible { opacity: 1; transform: translateY(0); }
+    .page-error { border: 1px solid var(--strong-line); padding: 24px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes grow-bar-y { from { opacity: 0; transform: scaleY(0); } to { opacity: 1; transform: scaleY(1); } }
+    @keyframes grow-bar-x { from { opacity: 0; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }
+    @keyframes draw-line { to { stroke-dashoffset: 0; } }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 1100px) {
+      :root { --sidebar: 210px; }
+      .page { padding-left: 28px; padding-right: 28px; }
+      .two-column, .prediction-layout { grid-template-columns: 1fr; }
+      .status-grid { grid-template-columns: repeat(2, 1fr); }
+      .all-metrics-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 820px) {
+      .sidebar {
+        box-shadow: 12px 0 30px rgba(0, 0, 0, .14);
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        width: 260px;
+      }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar.collapsed { transform: translateX(-100%); width: 260px; }
+      .sidebar.collapsed.open { transform: translateX(0); width: 260px; }
+      .sidebar.collapsed.open .nav-label,
+      .sidebar.collapsed.open .nav-link span:last-child,
+      .sidebar.collapsed.open .utility-label,
+      .sidebar.collapsed.open .utility-button small,
+      .sidebar.collapsed.open .sidebar-foot { display: block; }
+      .sidebar.collapsed.open .nav-link { justify-content: flex-start; padding-left: 10px; padding-right: 10px; }
+      .sidebar.collapsed.open .utility-grid { grid-template-columns: repeat(3, 1fr); }
+      .mobile-bar {
+        align-items: center;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        height: 58px;
+        justify-content: space-between;
+        padding: 0 18px;
+        position: sticky;
+        top: 0;
+        z-index: 40;
+      }
+      .mobile-menu { background: transparent; border: 1px solid var(--strong-line); height: 34px; width: 40px; }
+      .main { margin-left: 0; }
+      .main.sidebar-collapsed { margin-left: 0; }
+      .page { padding-top: 26px; }
+      .page-header { align-items: stretch; flex-direction: column; }
+      .filter-box { min-width: 0; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .kpi:nth-child(3) { border-left: 0; border-top: 1px solid var(--strong-line); }
+      .kpi:nth-child(4) { border-top: 1px solid var(--strong-line); }
+      .equal-column { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .page { padding: 22px 16px 70px; }
+      .page-header { margin-bottom: 24px; }
+      .kpi-grid { grid-template-columns: 1fr; }
+      .kpi + .kpi { border-left: 0; border-top: 1px solid var(--strong-line); }
+      .kpi { min-height: 105px; }
+      .section-header { align-items: flex-start; flex-direction: column; }
+      .section-note { text-align: left; }
+      .quality-grid, .status-grid { grid-template-columns: 1fr; }
+      form { grid-template-columns: 1fr; }
+      .card { padding: 15px; }
+      .history-pagination { align-items: flex-start; flex-direction: column; }
+      .page-size-control { justify-content: space-between; width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="loading-overlay active" id="loadingOverlay" role="status" aria-live="polite">
+    <div class="loading-content">
+      <span class="spinner" aria-hidden="true"></span>
+      <span class="loading-text" id="loadingText">Đang tải dữ liệu</span>
+    </div>
+  </div>
+  <div class="tooltip" id="tooltip" role="tooltip"></div>
+  <div class="toast" id="toast" aria-live="polite"></div>
+  <div class="info-dialog" id="infoDialog" role="dialog" aria-modal="true" aria-labelledby="infoDialogTitle">
+    <div class="info-panel">
+      <div class="info-panel-head">
+        <h3 id="infoDialogTitle">Giải thích chỉ số</h3>
+        <button class="info-close" id="infoClose" type="button" aria-label="Đóng">×</button>
+      </div>
+      <ul class="info-list" id="infoDialogContent"></ul>
+    </div>
+  </div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-toggle-row">
+      <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Thu gọn thanh điều hướng">&lt;&lt;</button>
+    </div>
+    <div class="nav-label" data-i18n="navigation">Điều hướng</div>
+    <nav class="nav-list">
+      <a class="nav-link active" href="#prediction"><span class="nav-icon">01</span><span data-i18n="prediction">Dự đoán</span></a>
+      <a class="nav-link" href="#overview"><span class="nav-icon">02</span><span data-i18n="overview">Tổng quan</span></a>
+      <a class="nav-link" href="#data"><span class="nav-icon">03</span><span data-i18n="data">Dữ liệu</span></a>
+      <a class="nav-link" href="#models"><span class="nav-icon">04</span><span data-i18n="models">Mô hình</span></a>
+      <a class="nav-link" href="#errors"><span class="nav-icon">05</span><span data-i18n="errors">Sai số</span></a>
+      <a class="nav-link" href="#history"><span class="nav-icon">06</span><span data-i18n="history">Lịch sử</span></a>
+    </nav>
+    <div class="sidebar-utils">
+      <div class="utility-label" data-i18n="utilities">Tiện ích</div>
+      <div class="utility-grid">
+        <button class="utility-button" id="themeToggle" type="button"><strong>◐</strong><small data-i18n="theme">Sáng/tối</small></button>
+        <button class="utility-button" id="languageToggle" type="button"><strong id="languageCode">VI</strong><small data-i18n="language">Ngôn ngữ</small></button>
+        <button class="utility-button" id="refreshButton" type="button"><strong>↻</strong><small data-i18n="refresh">Làm mới</small></button>
+      </div>
+      <div class="sidebar-foot">Local dashboard · 127.0.0.1</div>
+    </div>
+  </aside>
+
+  <div class="mobile-bar">
+    <strong>NYC Taxi</strong>
+    <button class="mobile-menu" id="menuButton" type="button" aria-label="Menu">☰</button>
+  </div>
+
+  <main class="main">
+    <div class="page">
+      <header class="page-header" id="overview">
+        <div>
+          <div class="eyebrow">New York Yellow Taxi · 2025</div>
+          <h1 data-i18n="dashboardTitle">Toàn cảnh dữ liệu<br>và dự đoán chuyến đi</h1>
+          <p class="header-copy" data-i18n="dashboardIntro">Dashboard tổng hợp toàn bộ pipeline 12 tháng: chất lượng dữ liệu, mô hình, sai số, triển khai và dự đoán MOJO.</p>
+        </div>
+      </header>
+
+      <section class="section" id="data">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">02 / Data volume</div>
+            <div class="section-title-row">
+              <h2 data-i18n="monthlyData">Dữ liệu theo tháng</h2>
+              <button class="info-button" type="button" data-info="data" data-i18n-aria="explain">!</button>
+            </div>
+          </div>
+          <div class="filter-box">
+            <label class="field-label" for="monthFilter" data-i18n="monthFilter">Lọc dữ liệu theo tháng</label>
+            <select id="monthFilter"><option value="all">Toàn bộ năm 2025</option></select>
+          </div>
+        </div>
+        <div class="kpi-grid">
+          <article class="kpi"><span class="kpi-label" data-i18n="rows">Số dòng</span><strong class="kpi-value" id="kpiRows">—</strong><small class="kpi-meta" id="kpiRowsMeta">—</small></article>
+          <article class="kpi"><span class="kpi-label" data-i18n="columns">Số cột</span><strong class="kpi-value" id="kpiColumns">—</strong><small class="kpi-meta" data-i18n="rawSchema">Schema dữ liệu raw</small></article>
+          <article class="kpi"><span class="kpi-label" data-i18n="fileSize">Dung lượng file</span><strong class="kpi-value" id="kpiSize">—</strong><small class="kpi-meta">Parquet</small></article>
+          <article class="kpi"><span class="kpi-label" data-i18n="period">Khoảng dữ liệu</span><strong class="kpi-value" id="kpiPeriod">—</strong><small class="kpi-meta" id="kpiPeriodMeta">—</small></article>
+        </div>
+        <div class="two-column">
+          <article class="card"><div class="card-title"><span data-i18n="monthlyRows">Số dòng từng tháng</span><span>2025</span></div><div class="chart" id="monthlyChart"></div></article>
+          <article class="card"><div class="card-title"><span data-i18n="selectedPeriod">Kỳ đang chọn</span><span id="selectedMonthBadge">—</span></div><div class="month-detail" id="monthDetail"></div></article>
+        </div>
+        <article class="card table-card">
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th data-i18n="month">Tháng</th><th data-i18n="rows">Số dòng</th><th data-i18n="columns">Số cột</th><th data-i18n="fileSizeMb">Dung lượng (MB)</th><th data-i18n="minTime">Thời gian nhỏ nhất</th><th data-i18n="maxTime">Thời gian lớn nhất</th></tr></thead>
+              <tbody id="monthTable"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section class="section" id="quality">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">03 / Data quality</div>
+            <div class="section-title-row">
+              <h2 data-i18n="qualityAndSplit">Chất lượng và phân chia dữ liệu</h2>
+              <button class="info-button" type="button" data-info="quality" data-i18n-aria="explain">!</button>
+            </div>
+          </div>
+        </div>
+        <div class="equal-column">
+          <article class="card">
+            <div class="card-title"><span data-i18n="cleaning">Kết quả làm sạch</span><span id="removedRate">—</span></div>
+            <div class="quality-grid" id="qualityGrid"></div>
+          </article>
+          <article class="card">
+            <div class="card-title"><span data-i18n="chronologicalSplit">Chronological split</span><span>Train → Validation → Test</span></div>
+            <div class="split-bar" id="splitBar"></div>
+            <div class="legend" id="splitLegend"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="models">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">04 / Model evaluation</div>
+            <div class="section-title-row">
+              <h2 data-i18n="modelComparison">So sánh mô hình</h2>
+              <button class="info-button" type="button" data-info="models" data-i18n-aria="explain">!</button>
+            </div>
+          </div>
+          <div class="model-controls">
+            <label class="model-filter"><span data-i18n="filterModel">Lọc theo model</span>
+              <select id="modelFilter"></select>
+            </label>
+            <div class="segmented-control" id="modelMetricControl">
+              <button class="chip active" type="button" data-metric="all" data-i18n="allMetrics">Tất cả</button>
+              <button class="chip" type="button" data-metric="rmse">RMSE</button>
+              <button class="chip" type="button" data-metric="mae">MAE</button>
+              <button class="chip" type="button" data-metric="r2">R²</button>
+            </div>
+          </div>
+        </div>
+        <div class="model-evaluation-grid">
+          <article class="card"><div class="card-title"><span id="modelChartTitle">RMSE · MAE · R²</span></div><div class="chart" id="modelChart"></div></article>
+          <article class="card">
+            <div class="card-title"><span data-i18n="modelMetrics">Chỉ số đầy đủ</span><span data-i18n="chronologicalTest">Test theo thời gian</span></div>
+            <div class="table-scroll"><table><thead><tr><th data-i18n="model">Mô hình</th><th>RMSE</th><th>MAE</th><th>R²</th><th>Test</th></tr></thead><tbody id="modelTable"></tbody></table></div>
+          </article>
+        </div>
+        <article class="card" style="margin-top:20px">
+          <div class="card-title">
+            <div class="card-title-row">
+              <span data-i18n="featureImportance">Mức độ quan trọng đặc trưng</span>
+              <button class="info-button" type="button" data-info="features" data-i18n-aria="explain">!</button>
+            </div>
+            <span>DRF</span>
+          </div>
+          <div class="chart" id="featureChart"></div>
+        </article>
+      </section>
+
+      <section class="section" id="errors">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">05 / Error analysis</div>
+            <div class="section-title-row">
+              <h2 data-i18n="errorAnalysis">Phân tích sai số đa chiều</h2>
+              <button class="info-button" type="button" data-info="errors" data-i18n-aria="explain">!</button>
+            </div>
+          </div>
+          <p class="section-note" data-i18n="errorHint">Chọn chiều phân tích; tooltip hiển thị số dòng, MAE, RMSE và mean error.</p>
+        </div>
+        <div class="tab-list" id="errorTabs">
+          <button class="chip active" type="button" data-error="hour" data-i18n="byHour">Theo giờ</button>
+          <button class="chip" type="button" data-error="day_of_week" data-i18n="byDay">Theo ngày</button>
+          <button class="chip" type="button" data-error="pickup_borough" data-i18n="pickupBorough">Quận đón</button>
+          <button class="chip" type="button" data-error="dropoff_borough" data-i18n="dropoffBorough">Quận trả</button>
+          <button class="chip" type="button" data-error="duration_range" data-i18n="durationRange">Khoảng thời gian</button>
+          <button class="chip" type="button" data-error="route" data-i18n="topRoutes">Tuyến sai số cao</button>
+        </div>
+        <article class="card" style="margin-top:14px">
+          <div class="card-title"><span id="errorChartTitle">MAE theo giờ</span><span>MAE · RMSE · Mean error</span></div>
+          <div class="chart" id="errorChart"></div>
+        </article>
+      </section>
+
+      <section class="section" id="prediction">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">01 / Interactive scoring</div>
+            <div class="section-title-row">
+              <h2 data-i18n="tripPrediction">Dự đoán thời gian chuyến đi</h2>
+              <button class="info-button" type="button" data-info="prediction" data-i18n-aria="explain">!</button>
+            </div>
+          </div>
+          <p class="section-note" data-i18n="predictionHint">Chọn model và chạy trực tiếp MOJO tương ứng để so sánh khách quan.</p>
+        </div>
+        <div class="prediction-layout">
+          <article class="card">
+            <form id="predictForm">
+              <label class="full-field"><span data-i18n="predictionModel">Model dự đoán</span><select id="prediction_model" required></select></label>
+              <label><span data-i18n="pickupZone">Điểm đón</span><select id="pickup_location" required></select></label>
+              <label><span data-i18n="dropoffZone">Điểm trả</span><select id="dropoff_location" required></select></label>
+              <label><span data-i18n="passengers">Số hành khách</span><input id="passenger_count" type="number" min="0" max="9" value="1" required></label>
+              <label><span data-i18n="pickupTime">Thời điểm đón</span><input id="pickup_datetime" type="datetime-local" value="2025-11-05T09:00" required></label>
+              <details>
+                <summary data-i18n="historicalFeatures">Đặc trưng lịch sử tuyến</summary>
+                <label><span data-i18n="historicalTrips">Số chuyến lịch sử</span><input id="route_trip_count" type="number" min="0" value="10000" required></label>
+                <label><span data-i18n="routeAverage">Trung bình tuyến (phút)</span><input id="route_avg_duration" type="number" min="1" max="180" step="0.1" value="15" required></label>
+                <label><span data-i18n="hourRouteAverage">Trung bình tuyến-giờ (phút)</span><input id="hour_route_avg_duration" type="number" min="1" max="180" step="0.1" value="15" required></label>
+              </details>
+              <button class="primary-button" id="predictButton" type="submit"><span class="button-spinner"></span><span data-i18n="runPrediction">Dự đoán bằng MOJO</span></button>
+            </form>
+          </article>
+          <article class="prediction-result" id="predictionResult">
+            <div>
+              <span class="result-label" data-i18n="predictionReady">Model sẵn sàng</span>
+              <strong id="selectedPredictionModel">DRF</strong>
+              <small data-i18n="predictionEmpty">Nhập thông tin chuyến đi và chạy dự đoán.</small>
+              <div class="model-objectivity" id="predictionModelMeta"></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="history">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">06 / User activity</div>
+            <div class="section-title-row">
+              <h2 data-i18n="activityHistory">Lịch sử hoạt động</h2>
+              <button class="info-button" type="button" data-info="history" data-i18n-aria="explain">!</button>
+            </div>
+          </div>
+          <div class="history-actions">
+            <button class="secondary-button" id="exportHistory" type="button" data-i18n="exportHistory">Xuất JSON</button>
+            <button class="secondary-button" id="clearHistory" type="button" data-i18n="clearHistory">Xóa lịch sử</button>
+          </div>
+        </div>
+        <article class="card table-card">
+          <div class="history-pagination" data-history-pagination>
+            <div class="page-buttons">
+              <button class="page-button" type="button" data-page-action="first" data-i18n-aria="firstPage" aria-label="Trang đầu">«</button>
+              <button class="page-button" type="button" data-page-action="previous" data-i18n-aria="previousPage" aria-label="Trang trước">‹</button>
+              <span class="page-status" data-page-status>—</span>
+              <button class="page-button" type="button" data-page-action="next" data-i18n-aria="nextPage" aria-label="Trang sau">›</button>
+              <button class="page-button" type="button" data-page-action="last" data-i18n-aria="lastPage" aria-label="Trang cuối">»</button>
+            </div>
+            <label class="page-size-control"><span data-i18n="rowsPerPage">Số dòng mỗi trang</span><input type="number" min="1" max="100" step="1" data-history-page-size value="10"></label>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th data-i18n="time">Thời gian</th><th data-i18n="action">Thao tác</th><th data-i18n="details">Chi tiết</th></tr></thead>
+              <tbody id="historyTable"></tbody>
+            </table>
+          </div>
+          <div class="history-empty" id="historyEmpty" data-i18n="historyEmpty">Chưa có hoạt động nào.</div>
+          <div class="history-pagination bottom" data-history-pagination>
+            <div class="page-buttons">
+              <button class="page-button" type="button" data-page-action="first" data-i18n-aria="firstPage" aria-label="Trang đầu">«</button>
+              <button class="page-button" type="button" data-page-action="previous" data-i18n-aria="previousPage" aria-label="Trang trước">‹</button>
+              <span class="page-status" data-page-status>—</span>
+              <button class="page-button" type="button" data-page-action="next" data-i18n-aria="nextPage" aria-label="Trang sau">›</button>
+              <button class="page-button" type="button" data-page-action="last" data-i18n-aria="lastPage" aria-label="Trang cuối">»</button>
+            </div>
+            <label class="page-size-control"><span data-i18n="rowsPerPage">Số dòng mỗi trang</span><input type="number" min="1" max="100" step="1" data-history-page-size value="10"></label>
+          </div>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const translations = {
+      vi: {
+        navigation:"Điều hướng", overview:"Tổng quan", data:"Dữ liệu", models:"Mô hình", errors:"Sai số", prediction:"Dự đoán", history:"Lịch sử",
+        utilities:"Tiện ích", theme:"Sáng/tối", language:"Ngôn ngữ", refresh:"Làm mới",
+        dashboardTitle:"Toàn cảnh dữ liệu<br>và dự đoán chuyến đi",
+        dashboardIntro:"Dashboard tổng hợp dữ liệu 12 tháng: chất lượng dữ liệu, mô hình, sai số và dự đoán MOJO.",
+        monthFilter:"Lọc dữ liệu theo tháng", allYear:"Toàn bộ năm 2025", rows:"Số dòng", columns:"Số cột", rawSchema:"Schema dữ liệu raw",
+        fileSize:"Dung lượng file", period:"Khoảng dữ liệu", monthlyData:"Dữ liệu theo tháng",
+        monthlyRows:"Số dòng từng tháng", selectedPeriod:"Kỳ đang chọn", month:"Tháng", fileSizeMb:"Dung lượng (MB)", minTime:"Thời gian nhỏ nhất", maxTime:"Thời gian lớn nhất",
+        qualityAndSplit:"Chất lượng và phân chia dữ liệu", cleaning:"Kết quả làm sạch", chronologicalSplit:"Chronological split",
+        modelComparison:"So sánh mô hình", modelMetrics:"Chỉ số đầy đủ", chronologicalTest:"Test theo thời gian", model:"Mô hình",
+        filterModel:"Lọc theo model", allModels:"Tất cả model", allMetrics:"Tất cả",
+        featureImportance:"Mức độ quan trọng đặc trưng", errorAnalysis:"Phân tích sai số đa chiều", errorHint:"Chọn chiều phân tích; tooltip hiển thị số dòng, MAE, RMSE và mean error.",
+        byHour:"Theo giờ", byDay:"Theo ngày", pickupBorough:"Quận đón", dropoffBorough:"Quận trả", durationRange:"Khoảng thời gian", topRoutes:"Tuyến sai số cao",
+        tripPrediction:"Dự đoán thời gian chuyến đi", predictionHint:"Chọn model và chạy trực tiếp MOJO tương ứng để so sánh khách quan.", predictionModel:"Model dự đoán",
+        pickupZone:"Điểm đón", dropoffZone:"Điểm trả", passengers:"Số hành khách", pickupTime:"Thời điểm đón", historicalFeatures:"Đặc trưng lịch sử tuyến",
+        historicalTrips:"Số chuyến lịch sử", routeAverage:"Trung bình tuyến (phút)", hourRouteAverage:"Trung bình tuyến-giờ (phút)", runPrediction:"Dự đoán bằng MOJO",
+        predictionReady:"Model sẵn sàng", predictionEmpty:"Nhập thông tin chuyến đi và chạy dự đoán.", rawRows:"Dòng thô", cleanRows:"Dòng sạch",
+        removedRows:"Dòng bị loại", duplicates:"Trùng lặp", invalidDuration:"Thời lượng lỗi", invalidPassenger:"Số khách lỗi",
+        train:"Train", validation:"Validation", test:"Test", statusComplete:"Hoàn tất", statusReady:"Sẵn sàng", statusPending:"Chờ xác thực",
+        loadingData:"Đang tải dữ liệu", filtering:"Đang lọc dữ liệu", applyingTheme:"Đang đổi giao diện", changingLanguage:"Đang đổi ngôn ngữ",
+        runningModel:"Đang chạy mô hình MOJO", refreshed:"Đã làm mới dữ liệu", predictionResult:"Thời gian dự đoán", minutes:"phút",
+        hour:"Giờ", day:"Ngày", percentage:"Tỷ lệ", fullYear:"12 tháng", oneMonth:"1 tháng",
+        activityHistory:"Lịch sử hoạt động", exportHistory:"Xuất JSON", clearHistory:"Xóa lịch sử", time:"Thời gian", action:"Thao tác", details:"Chi tiết", historyEmpty:"Chưa có hoạt động nào.",
+        explain:"Giải thích chỉ số", close:"Đóng", rowsPerPage:"Số dòng mỗi trang", page:"Trang", of:"trên",
+        firstPage:"Trang đầu", previousPage:"Trang trước", nextPage:"Trang sau", lastPage:"Trang cuối",
+        activity_load:"Mở dashboard", activity_filter_month:"Lọc tháng", activity_metric:"Đổi chỉ số", activity_model_filter:"Lọc model",
+        activity_error:"Đổi chiều sai số", activity_theme:"Đổi giao diện", activity_language:"Đổi ngôn ngữ", activity_refresh:"Làm mới dữ liệu",
+        activity_prediction:"Chạy dự đoán", activity_prediction_model:"Đổi model dự đoán", activity_nav:"Điều hướng",
+        activity_sidebar:"Ẩn/hiện navbar", activity_export:"Xuất lịch sử"
+      },
+      en: {
+        navigation:"Navigation", overview:"Overview", data:"Data", models:"Models", errors:"Errors", prediction:"Prediction", history:"History",
+        utilities:"Utilities", theme:"Light/dark", language:"Language", refresh:"Refresh",
+        dashboardTitle:"Full data panorama<br>and trip prediction",
+        dashboardIntro:"A complete view of 12 months of data: data quality, models, errors and MOJO prediction.",
+        monthFilter:"Filter data by month", allYear:"Full year 2025", rows:"Rows", columns:"Columns", rawSchema:"Raw data schema",
+        fileSize:"File size", period:"Data period", monthlyData:"Monthly data",
+        monthlyRows:"Rows by month", selectedPeriod:"Selected period", month:"Month", fileSizeMb:"File size (MB)", minTime:"Minimum timestamp", maxTime:"Maximum timestamp",
+        qualityAndSplit:"Data quality and split", cleaning:"Cleaning results", chronologicalSplit:"Chronological split",
+        modelComparison:"Model comparison", modelMetrics:"Full metrics", chronologicalTest:"Chronological test", model:"Model",
+        filterModel:"Filter by model", allModels:"All models", allMetrics:"All",
+        featureImportance:"Feature importance", errorAnalysis:"Multidimensional error analysis", errorHint:"Choose a dimension; tooltips show rows, MAE, RMSE and mean error.",
+        byHour:"By hour", byDay:"By day", pickupBorough:"Pickup borough", dropoffBorough:"Dropoff borough", durationRange:"Duration range", topRoutes:"High-error routes",
+        tripPrediction:"Trip duration prediction", predictionHint:"Select a model and run its actual MOJO for an objective comparison.", predictionModel:"Prediction model",
+        pickupZone:"Pickup zone", dropoffZone:"Dropoff zone", passengers:"Passengers", pickupTime:"Pickup time", historicalFeatures:"Historical route features",
+        historicalTrips:"Historical trips", routeAverage:"Route average (minutes)", hourRouteAverage:"Route-hour average (minutes)", runPrediction:"Predict with MOJO",
+        predictionReady:"Model ready", predictionEmpty:"Enter trip information and run prediction.", rawRows:"Raw rows", cleanRows:"Clean rows",
+        removedRows:"Removed rows", duplicates:"Duplicates", invalidDuration:"Invalid duration", invalidPassenger:"Invalid passengers",
+        train:"Train", validation:"Validation", test:"Test", statusComplete:"Complete", statusReady:"Ready", statusPending:"Pending proof",
+        loadingData:"Loading data", filtering:"Filtering data", applyingTheme:"Applying theme", changingLanguage:"Changing language",
+        runningModel:"Running MOJO model", refreshed:"Data refreshed", predictionResult:"Predicted duration", minutes:"minutes",
+        hour:"Hour", day:"Day", percentage:"Percentage", fullYear:"12 months", oneMonth:"1 month",
+        activityHistory:"Activity history", exportHistory:"Export JSON", clearHistory:"Clear history", time:"Time", action:"Action", details:"Details", historyEmpty:"No activity recorded.",
+        explain:"Explain metrics", close:"Close", rowsPerPage:"Rows per page", page:"Page", of:"of",
+        firstPage:"First page", previousPage:"Previous page", nextPage:"Next page", lastPage:"Last page",
+        activity_load:"Opened dashboard", activity_filter_month:"Filtered month", activity_metric:"Changed metric", activity_model_filter:"Filtered model",
+        activity_error:"Changed error dimension", activity_theme:"Changed theme", activity_language:"Changed language", activity_refresh:"Refreshed data",
+        activity_prediction:"Ran prediction", activity_prediction_model:"Changed prediction model", activity_nav:"Navigated",
+        activity_sidebar:"Toggled navbar", activity_export:"Exported history"
+      }
+    };
+
+    const explanations = {
+      vi: {
+        prediction: {
+          title:"Dự đoán thời gian chuyến đi",
+          items:[
+            ["MOJO","Artifact model độc lập được chạy trực tiếp để dự đoán số phút của chuyến đi."],
+            ["Model","Có thể đổi DRF, GBM Grid Search, GBM, AutoML hoặc Deep Learning để so sánh cùng một đầu vào."],
+            ["Đặc trưng lịch sử","route_trip_count là số chuyến tuyến đã biết; route_avg_duration là thời gian trung bình tuyến; hour_route_avg_duration là thời gian trung bình của cùng tuyến trong đúng khung giờ."]
+          ]
+        },
+        data: {
+          title:"Quy mô dữ liệu",
+          items:[
+            ["Số dòng","Tổng số chuyến taxi trong tháng đang chọn hoặc toàn bộ 12 tháng."],
+            ["Số cột","Số trường của schema dữ liệu raw."],
+            ["Dung lượng file","Tổng dung lượng các file Parquet của kỳ đang chọn."],
+            ["Khoảng dữ liệu","Thời điểm đón nhỏ nhất và lớn nhất quan sát được trong kỳ."]
+          ]
+        },
+        quality: {
+          title:"Chất lượng và phân chia dữ liệu",
+          items:[
+            ["Dòng thô / dòng sạch","Số bản ghi trước và sau các quy tắc làm sạch."],
+            ["Dòng bị loại","Bao gồm bản ghi trùng, thời lượng không hợp lệ và số hành khách không hợp lệ."],
+            ["Chronological split","Train, validation và test được chia theo thời gian để không dùng dữ liệu tương lai khi đánh giá."]
+          ]
+        },
+        models: {
+          title:"Chỉ số đánh giá mô hình",
+          items:[
+            ["RMSE ↓","Căn bậc hai sai số bình phương trung bình; phạt mạnh sai số lớn. Càng thấp càng tốt."],
+            ["MAE ↓","Sai số tuyệt đối trung bình theo phút. Càng thấp càng tốt."],
+            ["R² ↑","Tỷ lệ biến thiên thời gian chuyến đi được mô hình giải thích. Càng gần 1 càng tốt."],
+            ["Test","Số dòng test theo thời gian dùng để tính các chỉ số của model."]
+          ]
+        },
+        features: {
+          title:"Các đặc trưng của mô hình",
+          items:[
+            ["pickup_location","Mã Taxi Zone của điểm đón."],
+            ["dropoff_location","Mã Taxi Zone của điểm trả."],
+            ["passenger_count","Số hành khách trên chuyến đi."],
+            ["pickup_hour","Giờ đón xe, từ 0 đến 23."],
+            ["pickup_day_of_week","Thứ trong tuần của thời điểm đón."],
+            ["pickup_month","Tháng của thời điểm đón."],
+            ["is_weekend","Cờ cho biết chuyến đi thuộc cuối tuần hay không."],
+            ["route_trip_count","Số chuyến lịch sử đã ghi nhận trên cùng tuyến."],
+            ["route_avg_duration","Thời gian trung bình lịch sử của cùng tuyến."],
+            ["hour_route_avg_duration","Thời gian trung bình lịch sử của cùng tuyến trong đúng khung giờ đón."]
+          ]
+        },
+        errors: {
+          title:"Phân tích sai số",
+          items:[
+            ["Rows","Số chuyến thuộc nhóm đang phân tích."],
+            ["MAE","Độ lệch tuyệt đối trung bình giữa dự đoán và thực tế, tính bằng phút."],
+            ["RMSE","Sai số bình phương trung bình căn bậc hai; nhạy hơn với các chuyến sai lệch lớn."],
+            ["Mean error","Trung bình prediction − actual; dương là dự đoán cao, âm là dự đoán thấp."]
+          ]
+        },
+        history: {
+          title:"Lịch sử hoạt động",
+          items:[
+            ["Phạm vi","Lưu tối đa 100 thao tác của trình duyệt hiện tại trong localStorage."],
+            ["Phân trang","Nhập từ 1 đến 100 dòng mỗi trang; hai bộ điều khiển đầu/cuối luôn đồng bộ."],
+            ["Xuất JSON","Tải toàn bộ lịch sử, không chỉ các dòng đang hiển thị trên trang."]
+          ]
+        }
+      },
+      en: {
+        prediction: {
+          title:"Trip duration prediction",
+          items:[
+            ["MOJO","An independent model artifact executed directly to predict trip duration in minutes."],
+            ["Model","Switch among DRF, GBM Grid Search, GBM, AutoML and Deep Learning for the same input."],
+            ["Historical features","route_trip_count is known route volume; route_avg_duration is route mean duration; hour_route_avg_duration is the same route's mean duration at the pickup hour."]
+          ]
+        },
+        data: {
+          title:"Data volume",
+          items:[
+            ["Rows","Total taxi trips in the selected month or all 12 months."],
+            ["Columns","Number of fields in the raw-data schema."],
+            ["File size","Total Parquet file size for the selected period."],
+            ["Data period","Minimum and maximum observed pickup timestamps."]
+          ]
+        },
+        quality: {
+          title:"Data quality and split",
+          items:[
+            ["Raw / clean rows","Record counts before and after cleaning rules."],
+            ["Removed rows","Includes duplicates, invalid durations and invalid passenger counts."],
+            ["Chronological split","Train, validation and test are separated by time to avoid future-data leakage."]
+          ]
+        },
+        models: {
+          title:"Model evaluation metrics",
+          items:[
+            ["RMSE ↓","Root mean squared error; penalizes large misses. Lower is better."],
+            ["MAE ↓","Mean absolute error in minutes. Lower is better."],
+            ["R² ↑","Share of trip-duration variance explained by the model. Closer to 1 is better."],
+            ["Test","Chronological test sample size used to calculate model metrics."]
+          ]
+        },
+        features: {
+          title:"Model features",
+          items:[
+            ["pickup_location","Taxi Zone ID for the pickup."],
+            ["dropoff_location","Taxi Zone ID for the drop-off."],
+            ["passenger_count","Number of passengers."],
+            ["pickup_hour","Pickup hour from 0 to 23."],
+            ["pickup_day_of_week","Day of week of the pickup."],
+            ["pickup_month","Month of the pickup."],
+            ["is_weekend","Flag indicating a weekend trip."],
+            ["route_trip_count","Number of historical trips observed on the same route."],
+            ["route_avg_duration","Historical mean duration for the same route."],
+            ["hour_route_avg_duration","Historical mean duration for the same route at the pickup hour."]
+          ]
+        },
+        errors: {
+          title:"Error analysis",
+          items:[
+            ["Rows","Number of trips in the current analysis group."],
+            ["MAE","Mean absolute difference between prediction and actual duration, in minutes."],
+            ["RMSE","Root mean squared error; more sensitive to large misses."],
+            ["Mean error","Average prediction − actual; positive means overprediction, negative means underprediction."]
+          ]
+        },
+        history: {
+          title:"Activity history",
+          items:[
+            ["Scope","Stores up to 100 actions for this browser in localStorage."],
+            ["Pagination","Enter 1–100 rows per page; top and bottom controls stay synchronized."],
+            ["Export JSON","Downloads the complete history, not only the current page."]
+          ]
+        }
+      }
+    };
+
+    function storedHistory() {
+      try {
+        const value=JSON.parse(localStorage.getItem("nycTaxiHistory")||"[]");
+        return Array.isArray(value)?value:[];
+      } catch (_) { return []; }
+    }
+    function storedHistoryPageSize() {
+      const value=Number(localStorage.getItem("nycTaxiHistoryPageSize")||10);
+      return Number.isInteger(value)&&value>=1&&value<=100?value:10;
+    }
+    const queryParams = new URLSearchParams(window.location.search);
+    const requestedLanguage = queryParams.get("lang");
+    const requestedTheme = queryParams.get("theme");
+    const state = {
+      summary: null, analytics: null, zones: null, predictionModels: null,
+      month: queryParams.get("month") || "all", modelMetric: "all", modelFilter: "all", errorView: "hour",
+      lang: ["vi","en"].includes(requestedLanguage) ? requestedLanguage : (localStorage.getItem("nycTaxiLang") || "vi"),
+      theme: ["light","dark"].includes(requestedTheme) ? requestedTheme : (localStorage.getItem("nycTaxiTheme") || "light"),
+      sidebarCollapsed: localStorage.getItem("nycTaxiSidebarCollapsed")==="true",
+      history: storedHistory(), historyPage: 1, historyPageSize: storedHistoryPageSize()
+    };
+    const $ = selector => document.querySelector(selector);
+    const $$ = selector => [...document.querySelectorAll(selector)];
+    const t = key => translations[state.lang][key] || key;
+    const fmt = value => new Intl.NumberFormat(state.lang === "vi" ? "vi-VN" : "en-US").format(value);
+    const compact = value => new Intl.NumberFormat(state.lang === "vi" ? "vi-VN" : "en-US", { notation:"compact", maximumFractionDigits:2 }).format(value);
+    const tooltip = $("#tooltip");
+    let loadingDepth = 0;
+    let toastTimer;
+
+    function beginLoading(message) {
+      loadingDepth += 1;
+      $("#loadingText").textContent = message;
+      $("#loadingOverlay").classList.add("active");
+    }
+    function endLoading() {
+      loadingDepth = Math.max(0, loadingDepth - 1);
+      if (!loadingDepth) $("#loadingOverlay").classList.remove("active");
+    }
+    const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+    async function runAction(message, action) {
+      beginLoading(message);
+      try { await wait(130); return await action(); } finally { endLoading(); }
+    }
+    function showToast(message) {
+      clearTimeout(toastTimer);
+      $("#toast").textContent = message;
+      $("#toast").classList.add("visible");
+      toastTimer = setTimeout(() => $("#toast").classList.remove("visible"), 1800);
+    }
+    async function fetchJSON(url, options) {
+      const response = await fetch(url, options);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      return data;
+    }
+    function applyLanguage() {
+      document.documentElement.lang = state.lang;
+      $$("[data-i18n]").forEach(node => {
+        const value = t(node.dataset.i18n);
+        if (value.includes("<br>")) node.innerHTML = value; else node.textContent = value;
+      });
+      $$("[data-i18n-aria]").forEach(node=>node.setAttribute("aria-label",t(node.dataset.i18nAria)));
+      $("#infoClose").setAttribute("aria-label",t("close"));
+      $("#languageCode").textContent = state.lang.toUpperCase();
+      const allOption = $('#monthFilter option[value="all"]');
+      if (allOption) allOption.textContent = t("allYear");
+      const currentInfo=$("#infoDialog").dataset.currentInfo;
+      if(currentInfo) populateInfo(currentInfo);
+    }
+    function applyTheme() {
+      document.documentElement.dataset.theme = state.theme;
+      document.querySelector('meta[name="theme-color"]').content = state.theme === "dark" ? "#0d0d0d" : "#ffffff";
+    }
+    function applySidebarState() {
+      $("#sidebar").classList.toggle("collapsed",state.sidebarCollapsed);
+      $(".main").classList.toggle("sidebar-collapsed",state.sidebarCollapsed);
+      $("#sidebarToggle").textContent=state.sidebarCollapsed?">>":"<<";
+      $("#sidebarToggle").setAttribute("aria-label",state.sidebarCollapsed?"Mở thanh điều hướng":"Thu gọn thanh điều hướng");
+    }
+    function logActivity(code,detail="") {
+      state.history.unshift({timestamp:new Date().toISOString(),code,detail:String(detail)});
+      state.history=state.history.slice(0,100);
+      state.historyPage=1;
+      localStorage.setItem("nycTaxiHistory",JSON.stringify(state.history));
+      renderHistory();
+    }
+    function renderHistory() {
+      if(!$("#historyTable"))return;
+      const totalPages=Math.max(1,Math.ceil(state.history.length/state.historyPageSize));
+      state.historyPage=Math.min(Math.max(1,state.historyPage),totalPages);
+      const start=(state.historyPage-1)*state.historyPageSize;
+      const pageRows=state.history.slice(start,start+state.historyPageSize);
+      $("#historyEmpty").style.display=state.history.length?"none":"block";
+      $("#historyTable").innerHTML=pageRows.map(item=>`<tr><td>${new Intl.DateTimeFormat(state.lang==="vi"?"vi-VN":"en-US",{dateStyle:"short",timeStyle:"medium"}).format(new Date(item.timestamp))}</td><td>${t(`activity_${item.code}`)}</td><td>${item.detail||"—"}</td></tr>`).join("");
+      $$("[data-history-page-size]").forEach(input=>input.value=state.historyPageSize);
+      $$("[data-page-status]").forEach(status=>status.textContent=`${t("page")} ${state.historyPage} ${t("of")} ${totalPages} · ${fmt(state.history.length)} ${t("rows")}`);
+      $$("[data-page-action]").forEach(button=>{
+        const atStart=state.historyPage===1;
+        const atEnd=state.historyPage===totalPages;
+        button.disabled=["first","previous"].includes(button.dataset.pageAction)?atStart:atEnd;
+      });
+    }
+    let lastInfoTrigger=null;
+    function populateInfo(key) {
+      const info=explanations[state.lang][key];
+      if(!info)return;
+      $("#infoDialog").dataset.currentInfo=key;
+      $("#infoDialogTitle").textContent=info.title;
+      const list=$("#infoDialogContent");
+      list.innerHTML="";
+      info.items.forEach(([label,description])=>{
+        const item=document.createElement("li");
+        const name=document.createElement("b");
+        const copy=document.createElement("span");
+        name.textContent=label;
+        copy.textContent=description;
+        item.append(name,copy);
+        list.appendChild(item);
+      });
+    }
+    function openInfo(key,trigger) {
+      lastInfoTrigger=trigger;
+      populateInfo(key);
+      $("#infoDialog").classList.add("open");
+      document.body.style.overflow="hidden";
+      $("#infoClose").focus();
+    }
+    function closeInfo() {
+      $("#infoDialog").classList.remove("open");
+      $("#infoDialog").dataset.currentInfo="";
+      document.body.style.overflow="";
+      if(lastInfoTrigger)lastInfoTrigger.focus();
+    }
+    function monthName(code, short=false) {
+      if (code === "all") return t("allYear");
+      const [year, month] = code.split("-").map(Number);
+      return new Intl.DateTimeFormat(state.lang === "vi" ? "vi-VN" : "en-US", { month: short ? "short" : "long", year: short ? undefined : "numeric" }).format(new Date(year, month - 1, 1));
+    }
+    function selectedMonthlyRows() {
+      return state.month === "all" ? state.analytics.monthly : state.analytics.monthly.filter(row => row.month === state.month);
+    }
+    function selectedMonthlyAggregate() {
+      const rows = selectedMonthlyRows();
+      return {
+        month: state.month,
+        rows: rows.reduce((sum, row) => sum + row.rows, 0),
+        columns: Math.max(...rows.map(row => row.columns)),
+        file_size_mb: rows.reduce((sum, row) => sum + row.file_size_mb, 0),
+        min_pickup_time: rows.reduce((min, row) => row.min_pickup_time < min ? row.min_pickup_time : min, rows[0].min_pickup_time),
+        max_pickup_time: rows.reduce((max, row) => row.max_pickup_time > max ? row.max_pickup_time : max, rows[0].max_pickup_time)
+      };
+    }
+    function showTooltip(event, title, lines) {
+      tooltip.innerHTML = `<b>${title}</b>${lines.join("<br>")}`;
+      tooltip.classList.add("visible");
+      moveTooltip(event);
+    }
+    function moveTooltip(event) {
+      const x = Math.min(event.clientX + 14, window.innerWidth - tooltip.offsetWidth - 16);
+      const y = Math.min(event.clientY + 14, window.innerHeight - tooltip.offsetHeight - 16);
+      tooltip.style.left = `${Math.max(8, x)}px`;
+      tooltip.style.top = `${Math.max(8, y)}px`;
+    }
+    function hideTooltip() { tooltip.classList.remove("visible"); }
+    function bindTooltip(element, title, lines) {
+      element.setAttribute("tabindex", "0");
+      element.addEventListener("mouseenter", event => showTooltip(event, title, lines));
+      element.addEventListener("mousemove", moveTooltip);
+      element.addEventListener("mouseleave", hideTooltip);
+      element.addEventListener("focus", () => {
+        const box = element.getBoundingClientRect();
+        showTooltip({ clientX: box.left + box.width / 2, clientY: box.top }, title, lines);
+      });
+      element.addEventListener("blur", hideTooltip);
+    }
+    function svgNode(name, attributes={}) {
+      const node = document.createElementNS("http://www.w3.org/2000/svg", name);
+      Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, value));
+      return node;
+    }
+    function createSvg(container, width=760, height=330) {
+      container.innerHTML = "";
+      const svg = svgNode("svg", { viewBox:`0 0 ${width} ${height}`, role:"img" });
+      container.appendChild(svg);
+      return svg;
+    }
+    function drawAxes(svg, width, height, margin, maxValue, formatter=value => String(value)) {
+      const plotHeight = height - margin.top - margin.bottom;
+      for (let tick=0; tick<=4; tick++) {
+        const y = margin.top + plotHeight - plotHeight * tick / 4;
+        svg.appendChild(svgNode("line", { x1:margin.left, y1:y, x2:width-margin.right, y2:y, class:"axis" }));
+        const text = svgNode("text", { x:margin.left-9, y:y+3, "text-anchor":"end" });
+        text.textContent = formatter(maxValue * tick / 4);
+        svg.appendChild(text);
+      }
+    }
+    function verticalBarChart(container, data, options) {
+      const width=760, height=330, margin={top:20,right:18,bottom:58,left:65};
+      const svg=createSvg(container,width,height);
+      const max=Math.max(...data.map(options.value), .001) * 1.12;
+      drawAxes(svg,width,height,margin,max,options.axisFormat || (value => value.toFixed(1)));
+      const plotWidth=width-margin.left-margin.right;
+      const plotHeight=height-margin.top-margin.bottom;
+      const step=plotWidth/data.length;
+      data.forEach((item,index) => {
+        const value=options.value(item);
+        const barWidth=Math.min(54,step*.62);
+        const barHeight=plotHeight*value/max;
+        const x=margin.left+step*index+(step-barWidth)/2;
+        const y=margin.top+plotHeight-barHeight;
+        const rect=svgNode("rect",{x,y,width:barWidth,height:Math.max(1,barHeight),class:"bar"});
+        svg.appendChild(rect);
+        bindTooltip(rect,options.label(item),options.tooltip(item));
+        const valueLabel=svgNode("text",{x:x+barWidth/2,y:Math.max(margin.top+9,y-7),"text-anchor":"middle",class:"value-label"});
+        valueLabel.textContent=options.valueFormat?options.valueFormat(value):value.toFixed(3);
+        svg.appendChild(valueLabel);
+        const label=svgNode("text",{x:x+barWidth/2,y:height-margin.bottom+18,"text-anchor":"middle"});
+        label.textContent=options.shortLabel ? options.shortLabel(item) : options.label(item);
+        svg.appendChild(label);
+      });
+    }
+    function lineChart(container, data, options) {
+      const width=760, height=330, margin={top:24,right:20,bottom:55,left:68};
+      const svg=createSvg(container,width,height);
+      const values=data.map(options.value);
+      const max=Math.max(...values,.001)*1.12;
+      drawAxes(svg,width,height,margin,max,options.axisFormat || (value => compact(value)));
+      const plotWidth=width-margin.left-margin.right;
+      const plotHeight=height-margin.top-margin.bottom;
+      const x=index => margin.left+(data.length===1?plotWidth/2:plotWidth*index/(data.length-1));
+      const y=value => margin.top+plotHeight-plotHeight*value/max;
+      const path=svgNode("path",{d:data.map((item,index)=>`${index?"L":"M"} ${x(index)} ${y(options.value(item))}`).join(" "),class:"line"});
+      svg.appendChild(path);
+      data.forEach((item,index)=>{
+        const circle=svgNode("circle",{cx:x(index),cy:y(options.value(item)),r:state.month===item.month?7:5,class:`point${state.month===item.month?" selected":""}`});
+        svg.appendChild(circle);
+        bindTooltip(circle,options.label(item),options.tooltip(item));
+        const label=svgNode("text",{x:x(index),y:height-margin.bottom+19,"text-anchor":"middle"});
+        label.textContent=options.shortLabel(item);
+        svg.appendChild(label);
+      });
+    }
+    function horizontalBarChart(container, data, options) {
+      const width=900, rowHeight=34, margin={top:14,right:90,bottom:20,left:205};
+      const height=Math.max(250,margin.top+margin.bottom+rowHeight*data.length);
+      const svg=createSvg(container,width,height);
+      const max=Math.max(...data.map(options.value),.001);
+      const plotWidth=width-margin.left-margin.right;
+      data.forEach((item,index)=>{
+        const y=margin.top+index*rowHeight;
+        const value=options.value(item);
+        const label=svgNode("text",{x:margin.left-12,y:y+17,"text-anchor":"end"});
+        label.textContent=options.label(item);
+        svg.appendChild(label);
+        const rect=svgNode("rect",{x:margin.left,y:y+5,width:Math.max(2,plotWidth*value/max),height:17,class:"bar horizontal"});
+        svg.appendChild(rect);
+        bindTooltip(rect,options.label(item),options.tooltip(item));
+        const valueLabel=svgNode("text",{x:margin.left+plotWidth*value/max+8,y:y+17});
+        valueLabel.textContent=options.valueFormat(value);
+        svg.appendChild(valueLabel);
+      });
+    }
+
+    function renderMonthFilter() {
+      const filter=$("#monthFilter");
+      filter.innerHTML=`<option value="all">${t("allYear")}</option>`+state.analytics.monthly.map(row=>`<option value="${row.month}">${monthName(row.month)}</option>`).join("");
+      filter.value=state.month;
+    }
+    function renderMonthly() {
+      const selected=selectedMonthlyAggregate();
+      $("#kpiRows").textContent=fmt(selected.rows);
+      $("#kpiRowsMeta").textContent=state.month==="all"?t("fullYear"):t("oneMonth");
+      $("#kpiColumns").textContent=fmt(selected.columns);
+      $("#kpiSize").textContent=`${selected.file_size_mb.toFixed(2)} MB`;
+      $("#kpiPeriod").textContent=state.month==="all"?"2025":monthName(state.month,true);
+      $("#kpiPeriodMeta").textContent=`${selected.min_pickup_time.slice(0,10)} → ${selected.max_pickup_time.slice(0,10)}`;
+      $("#selectedMonthBadge").textContent=monthName(state.month);
+      $("#monthDetail").innerHTML=[
+        [t("rows"),fmt(selected.rows)],[t("columns"),fmt(selected.columns)],[t("fileSize"),`${selected.file_size_mb.toFixed(2)} MB`],
+        [t("minTime"),selected.min_pickup_time],[t("maxTime"),selected.max_pickup_time]
+      ].map(([label,value])=>`<div class="detail-row"><span>${label}</span><strong>${value}</strong></div>`).join("");
+      lineChart($("#monthlyChart"),state.analytics.monthly,{
+        value:item=>item.rows,label:item=>monthName(item.month),
+        shortLabel:item=>monthName(item.month,true).replace(/\s?2025/,""),
+        axisFormat:value=>compact(value),
+        tooltip:item=>[`${t("rows")}: ${fmt(item.rows)}`,`${t("columns")}: ${item.columns}`,`${t("fileSize")}: ${item.file_size_mb.toFixed(2)} MB`,
+          `${t("minTime")}: ${item.min_pickup_time}`,`${t("maxTime")}: ${item.max_pickup_time}`]
+      });
+      const tableRows=state.month==="all"?state.analytics.monthly:state.analytics.monthly.filter(row=>row.month===state.month);
+      $("#monthTable").innerHTML=tableRows.map(row=>`<tr class="${row.month===state.month?"is-selected":""}"><td>${monthName(row.month)}</td><td>${fmt(row.rows)}</td><td>${row.columns}</td><td>${row.file_size_mb.toFixed(2)}</td><td>${row.min_pickup_time}</td><td>${row.max_pickup_time}</td></tr>`).join("");
+    }
+    function renderQuality() {
+      const clean=state.analytics.cleaning;
+      $("#removedRate").textContent=`${clean.removed_percentage.toFixed(2)}%`;
+      const items=[[t("rawRows"),clean.raw_rows],[t("cleanRows"),clean.clean_rows],[t("removedRows"),clean.removed_rows],
+        [t("duplicates"),clean.duplicates],[t("invalidDuration"),clean.invalid_duration],[t("invalidPassenger"),clean.invalid_passenger_count]];
+      $("#qualityGrid").innerHTML=items.map(([label,value])=>`<div class="quality-item"><span>${label}</span><strong>${fmt(value)}</strong></div>`).join("");
+      const splits=state.analytics.splits;
+      $("#splitBar").innerHTML=splits.map(split=>`<div class="split-segment" data-split="${split.split}" style="width:${split.percentage}%"></div>`).join("");
+      $("#splitLegend").innerHTML=splits.map(split=>`<div class="legend-row"><span class="legend-swatch"></span><span>${t(split.split)} · ${split.min_date.slice(0,10)} → ${split.max_date.slice(0,10)}</span><strong>${split.percentage.toFixed(2)}%</strong></div>`).join("");
+      $$(".split-segment").forEach((segment,index)=>bindTooltip(segment,t(splits[index].split),[
+        `${t("rows")}: ${fmt(splits[index].rows)}`,`${t("percentage")}: ${splits[index].percentage.toFixed(4)}%`,
+        `${splits[index].min_date} → ${splits[index].max_date}`
+      ]));
+    }
+    function renderModels() {
+      const metric=state.modelMetric;
+      const filter=$("#modelFilter");
+      if(!filter.options.length) {
+        filter.innerHTML=`<option value="all">${t("allModels")}</option>`+state.summary.models.map(item=>`<option value="${item.model}">${item.model}</option>`).join("");
+      } else {
+        filter.options[0].textContent=t("allModels");
+      }
+      filter.value=state.modelFilter;
+      const models=state.modelFilter==="all"?state.summary.models:state.summary.models.filter(item=>item.model===state.modelFilter);
+      const metricOptions={
+        rmse:{label:"RMSE",arrow:"↓",axis:value=>value.toFixed(1),format:value=>value.toFixed(4)},
+        mae:{label:"MAE",arrow:"↓",axis:value=>value.toFixed(1),format:value=>value.toFixed(4)},
+        r2:{label:"R²",arrow:"↑",axis:value=>value.toFixed(2),format:value=>value.toFixed(4)}
+      };
+      if(metric==="all") {
+        $("#modelChartTitle").textContent="RMSE · MAE · R²";
+        $("#modelChart").innerHTML=`<div class="all-metrics-grid">${["rmse","mae","r2"].map(key=>`<div class="all-metric-panel"><div class="all-metric-title">${metricOptions[key].label} · ${metricOptions[key].arrow}</div><div class="chart" data-all-metric="${key}"></div></div>`).join("")}</div>`;
+        ["rmse","mae","r2"].forEach(key=>{
+          const config=metricOptions[key];
+          verticalBarChart($(`[data-all-metric="${key}"]`),models,{
+            value:item=>item[key],label:item=>item.model,shortLabel:item=>item.model.replace(" Grid Search"," Grid"),
+            axisFormat:config.axis,valueFormat:config.format,
+            tooltip:item=>[`${config.label}: ${config.format(item[key])}`]
+          });
+        });
+      } else {
+        const config=metricOptions[metric];
+        $("#modelChartTitle").textContent=`${config.label} · ${config.arrow}`;
+        verticalBarChart($("#modelChart"),models,{
+          value:item=>item[metric],label:item=>item.model,shortLabel:item=>item.model.replace(" Grid Search"," Grid"),
+          axisFormat:config.axis,valueFormat:config.format,
+          tooltip:item=>[`${config.label}: ${config.format(item[metric])}`]
+        });
+      }
+      $("#modelTable").innerHTML=models.map(item=>`<tr><td><b>${item.model}</b></td><td>${item.rmse.toFixed(4)}</td><td>${item.mae.toFixed(4)}</td><td>${item.r2.toFixed(4)}</td><td>${fmt(item.test_rows)}</td></tr>`).join("");
+      horizontalBarChart($("#featureChart"),state.analytics.feature_importance,{
+        value:item=>item.percentage,label:item=>item.feature,valueFormat:value=>`${(value*100).toFixed(2)}%`,
+        tooltip:item=>[`${t("percentage")}: ${(item.percentage*100).toFixed(4)}%`,`Scaled: ${item.scaled_importance.toFixed(4)}`,`Relative: ${fmt(Math.round(item.relative_importance))}`]
+      });
+    }
+    function errorTitle(view) {
+      const keys={hour:"byHour",day_of_week:"byDay",pickup_borough:"pickupBorough",dropoff_borough:"dropoffBorough",duration_range:"durationRange",route:"topRoutes"};
+      return `${state.lang==="vi"?"MAE":"MAE"} · ${t(keys[view])}`;
+    }
+    function errorGroupLabel(view,group) {
+      if(view==="hour") return `${group}:00`;
+      if(view==="day_of_week") {
+        const days=state.lang==="vi"?["CN","T2","T3","T4","T5","T6","T7"]:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+        return days[Number(group)-1]||group;
+      }
+      return group.replace(/^\d+_/,"");
+    }
+    function renderErrors() {
+      const view=state.errorView, data=state.analytics.errors[view];
+      $("#errorChartTitle").textContent=errorTitle(view);
+      const options={
+        value:item=>item.mae,label:item=>errorGroupLabel(view,item.group),
+        shortLabel:item=>errorGroupLabel(view,item.group),
+        axisFormat:value=>value.toFixed(1),
+        tooltip:item=>[`${t("rows")}: ${fmt(item.rows)}`,`MAE: ${item.mae.toFixed(4)}`,`RMSE: ${item.rmse.toFixed(4)}`,`Mean error: ${item.mean_error.toFixed(4)}`]
+      };
+      if(["pickup_borough","dropoff_borough","route"].includes(view)) {
+        horizontalBarChart($("#errorChart"),data,{...options,valueFormat:value=>value.toFixed(3)});
+      } else {
+        verticalBarChart($("#errorChart"),data,options);
+      }
+    }
+    function predictionModel() {
+      return state.predictionModels.find(item=>item.key===$("#prediction_model").value)||state.predictionModels[0];
+    }
+    function updatePredictionModelMeta(resetResult=true) {
+      const model=predictionModel();
+      if(!model)return;
+      $("#selectedPredictionModel").textContent=model.label;
+      $("#predictionModelMeta").innerHTML=[
+        ["RMSE",model.rmse.toFixed(4)],["MAE",model.mae.toFixed(4)],["R²",model.r2.toFixed(4)]
+      ].map(([label,value])=>`<div><span>${label}</span><b>${value}</b></div>`).join("");
+      if(resetResult) {
+        $("#predictionResult").className="prediction-result";
+        $("#predictionResult").innerHTML=`<div><span class="result-label">${t("predictionReady")}</span><strong id="selectedPredictionModel">${model.label}</strong><small>${t("predictionEmpty")}</small><div class="model-objectivity" id="predictionModelMeta">${[["RMSE",model.rmse.toFixed(4)],["MAE",model.mae.toFixed(4)],["R²",model.r2.toFixed(4)]].map(([label,value])=>`<div><span>${label}</span><b>${value}</b></div>`).join("")}</div></div>`;
+      }
+    }
+    function renderPredictionModels() {
+      const available=state.predictionModels.filter(item=>item.available);
+      const select=$("#prediction_model");
+      const current=select.value||"drf";
+      select.innerHTML=available.map(item=>`<option value="${item.key}">${item.label}</option>`).join("");
+      select.value=available.some(item=>item.key===current)?current:available[0].key;
+      updatePredictionModelMeta(true);
+    }
+    function renderZones() {
+      const options=state.zones.map(zone=>`<option value="${zone.id}">${zone.id} · ${zone.zone} (${zone.borough})</option>`).join("");
+      $("#pickup_location").innerHTML=options;
+      $("#dropoff_location").innerHTML=options;
+      $("#pickup_location").value="161";
+      $("#dropoff_location").value="236";
+    }
+    function renderAll() {
+      applyLanguage();
+      renderMonthFilter();
+      renderMonthly();
+      renderQuality();
+      renderModels();
+      renderErrors();
+      renderZones();
+      renderPredictionModels();
+      renderHistory();
+      applySidebarState();
+    }
+    async function loadAll(showMessage=false) {
+      beginLoading(t("loadingData"));
+      try {
+        [state.summary,state.analytics,state.zones,state.predictionModels]=await Promise.all([
+          fetchJSON("/api/summary"),fetchJSON("/api/analytics"),fetchJSON("/api/zones"),fetchJSON("/api/models")
+        ]);
+        if (state.month !== "all" && !state.analytics.monthly.some(row => row.month === state.month)) {
+          state.month = "all";
+        }
+        renderAll();
+        if(showMessage) {
+          showToast(t("refreshed"));
+          logActivity("refresh",`${state.analytics.monthly.length} months`);
+        } else {
+          logActivity("load","2025");
+        }
+      } finally { endLoading(); }
+    }
+
+    $$(".info-button").forEach(button=>button.addEventListener("click",()=>runAction(t("loadingData"),async()=>openInfo(button.dataset.info,button))));
+    $("#infoClose").addEventListener("click",closeInfo);
+    $("#infoDialog").addEventListener("click",event=>{ if(event.target===$("#infoDialog"))closeInfo(); });
+    document.addEventListener("keydown",event=>{ if(event.key==="Escape"&&$("#infoDialog").classList.contains("open"))closeInfo(); });
+    $("#history").addEventListener("click",event=>{
+      const button=event.target.closest("[data-page-action]");
+      if(!button)return;
+      const totalPages=Math.max(1,Math.ceil(state.history.length/state.historyPageSize));
+      const actions={
+        first:()=>1,
+        previous:()=>Math.max(1,state.historyPage-1),
+        next:()=>Math.min(totalPages,state.historyPage+1),
+        last:()=>totalPages
+      };
+      runAction(t("loadingData"),async()=>{
+        state.historyPage=actions[button.dataset.pageAction]();
+        renderHistory();
+      });
+    });
+    $$("[data-history-page-size]").forEach(input=>input.addEventListener("change",event=>{
+      const value=Math.min(100,Math.max(1,Math.round(Number(event.target.value)||10)));
+      runAction(t("loadingData"),async()=>{
+        state.historyPageSize=value;
+        state.historyPage=1;
+        localStorage.setItem("nycTaxiHistoryPageSize",String(value));
+        renderHistory();
+      });
+    }));
+    $("#monthFilter").addEventListener("change",event=>runAction(t("filtering"),async()=>{
+      state.month=event.target.value;
+      renderMonthly();
+      logActivity("filter_month",monthName(state.month));
+    }));
+    $("#modelMetricControl").addEventListener("click",event=>{
+      const button=event.target.closest("[data-metric]");
+      if(!button)return;
+      runAction(t("loadingData"),async()=>{
+        $$("#modelMetricControl .chip").forEach(item=>item.classList.toggle("active",item===button));
+        state.modelMetric=button.dataset.metric;
+        renderModels();
+        logActivity("metric",button.textContent.trim());
+      });
+    });
+    $("#modelFilter").addEventListener("change",event=>runAction(t("filtering"),async()=>{
+      state.modelFilter=event.target.value;
+      renderModels();
+      logActivity("model_filter",event.target.options[event.target.selectedIndex].textContent);
+    }));
+    $("#errorTabs").addEventListener("click",event=>{
+      const button=event.target.closest("[data-error]");
+      if(!button)return;
+      runAction(t("loadingData"),async()=>{
+        $$("#errorTabs .chip").forEach(item=>item.classList.toggle("active",item===button));
+        state.errorView=button.dataset.error;
+        renderErrors();
+        logActivity("error",button.textContent.trim());
+      });
+    });
+    $("#themeToggle").addEventListener("click",()=>runAction(t("applyingTheme"),async()=>{
+      state.theme=state.theme==="light"?"dark":"light";
+      localStorage.setItem("nycTaxiTheme",state.theme);
+      applyTheme();
+      logActivity("theme",state.theme);
+    }));
+    $("#languageToggle").addEventListener("click",()=>runAction(t("changingLanguage"),async()=>{
+      state.lang=state.lang==="vi"?"en":"vi";
+      localStorage.setItem("nycTaxiLang",state.lang);
+      renderAll();
+      logActivity("language",state.lang.toUpperCase());
+    }));
+    $("#refreshButton").addEventListener("click",()=>loadAll(true));
+    $("#menuButton").addEventListener("click",()=>$("#sidebar").classList.toggle("open"));
+    $("#sidebarToggle").addEventListener("click",()=>runAction(t("loadingData"),async()=>{
+      state.sidebarCollapsed=!state.sidebarCollapsed;
+      localStorage.setItem("nycTaxiSidebarCollapsed",String(state.sidebarCollapsed));
+      applySidebarState();
+      logActivity("sidebar",state.sidebarCollapsed?">>":"<<");
+    }));
+    $$(".nav-link").forEach(link=>link.addEventListener("click",event=>{
+      event.preventDefault();
+      const target=document.querySelector(link.getAttribute("href"));
+      $("#sidebar").classList.remove("open");
+      $$(".nav-link").forEach(item=>item.classList.toggle("active",item===link));
+      runAction(t("loadingData"),async()=>{
+        target.scrollIntoView({behavior:"smooth",block:"start"});
+        logActivity("nav",link.textContent.trim());
+      });
+    }));
+    $("#prediction_model").addEventListener("change",event=>runAction(t("loadingData"),async()=>{
+      updatePredictionModelMeta(true);
+      logActivity("prediction_model",event.target.options[event.target.selectedIndex].textContent);
+    }));
+    $("#predictForm").addEventListener("submit",async event=>{
+      event.preventDefault();
+      const button=$("#predictButton");
+      const result=$("#predictionResult");
+      const keys=["pickup_location","dropoff_location","passenger_count","pickup_datetime","route_trip_count","route_avg_duration","hour_route_avg_duration"];
+      const payload=Object.fromEntries(keys.map(key=>[key,document.getElementById(key).value]));
+      payload.model=$("#prediction_model").value;
+      button.disabled=true;
+      button.classList.add("is-loading");
+      beginLoading(t("runningModel"));
+      try {
+        const data=await fetchJSON("/api/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+        result.className="prediction-result";
+        const model=predictionModel();
+        result.innerHTML=`<div><span class="result-label">${t("predictionResult")}</span><strong>${data.prediction_minutes.toFixed(2)} ${t("minutes")}</strong><small>${data.model} · ${data.features.pickup_hour}:00 · DOW ${data.features.pickup_day_of_week}</small><div class="model-objectivity">${[["RMSE",model.rmse.toFixed(4)],["MAE",model.mae.toFixed(4)],["R²",model.r2.toFixed(4)]].map(([label,value])=>`<div><span>${label}</span><b>${value}</b></div>`).join("")}</div></div>`;
+        logActivity("prediction",`${data.model}: ${data.prediction_minutes.toFixed(2)} ${t("minutes")}`);
+      } catch(error) {
+        result.className="prediction-result error";
+        result.innerHTML=`<div><span class="result-label">Error</span><strong>—</strong><small>${error.message}</small></div>`;
+      } finally {
+        button.disabled=false;
+        button.classList.remove("is-loading");
+        endLoading();
+      }
+    });
+    $("#exportHistory").addEventListener("click",()=>runAction(t("loadingData"),async()=>{
+      logActivity("export",`${state.history.length} records`);
+      const blob=new Blob([JSON.stringify(state.history,null,2)],{type:"application/json"});
+      const url=URL.createObjectURL(blob);
+      const anchor=document.createElement("a");
+      anchor.href=url;
+      anchor.download=`nyc-taxi-activity-${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    }));
+    $("#clearHistory").addEventListener("click",()=>runAction(t("loadingData"),async()=>{
+      state.history=[];
+      state.historyPage=1;
+      localStorage.removeItem("nycTaxiHistory");
+      renderHistory();
+    }));
+
+    applyTheme();
+    applyLanguage();
+    loadAll().catch(error=>{
+      endLoading();
+      $(".page").innerHTML=`<div class="page-error"><b>Dashboard error</b><p>${error.message}</p></div>`;
+    });
+  </script>
+</body>
+</html>

@@ -31,7 +31,7 @@
       "validation_rmse": 7.150781420469156,
       "validation_mae": 4.46542076136759,
       "validation_r2": 0.7648889178097431,
-      "training_time_seconds": 36.338318699999945
+      "training_time_seconds": 70.18986819999918
     },
     {
       "maxDepth": 4,
@@ -40,7 +40,7 @@
       "validation_rmse": 7.085725899201391,
       "validation_mae": 4.441431925952362,
       "validation_r2": 0.7691473889775933,
-      "training_time_seconds": 34.40254509999977
+      "training_time_seconds": 66.05517940000027
     },
     {
       "maxDepth": 6,
@@ -49,7 +49,7 @@
       "validation_rmse": 7.0704649426376625,
       "validation_mae": 4.413110614398816,
       "validation_r2": 0.7701407205956301,
-      "training_time_seconds": 43.504623300001185
+      "training_time_seconds": 84.07382260000122
     },
     {
       "maxDepth": 6,
@@ -58,7 +58,7 @@
       "validation_rmse": 7.032685201472854,
       "validation_mae": 4.394510646780444,
       "validation_r2": 0.7725905802301181,
-      "training_time_seconds": 44.531719200000225
+      "training_time_seconds": 88.83604429999832
     },
     {
       "maxDepth": 8,
@@ -67,7 +67,7 @@
       "validation_rmse": 7.049079935512654,
       "validation_mae": 4.387835924965535,
       "validation_r2": 0.771529061731496,
-      "training_time_seconds": 57.68446219999896
+      "training_time_seconds": 107.1818889999995
     },
     {
       "maxDepth": 8,
@@ -76,7 +76,7 @@
       "validation_rmse": 7.03590825031107,
       "validation_mae": 4.383705795063248,
       "validation_r2": 0.7723820909832781,
-      "training_time_seconds": 56.064378099999885
+      "training_time_seconds": 98.7894821000009
     }
   ],
   "best_configuration": {
@@ -86,12 +86,12 @@
     "validation_rmse": 7.032685201472854,
     "validation_mae": 4.394510646780444,
     "validation_r2": 0.7725905802301181,
-    "training_time_seconds": 44.531719200000225
+    "training_time_seconds": 88.83604429999832
   },
   "test_metrics": {
     "rmse": 7.463094744843245,
     "mae": 4.632936656070011,
     "r2": 0.7471530850501494
   },
-  "total_time_seconds": 284.95060150000063
+  "total_time_seconds": 536.5232132000001
 }

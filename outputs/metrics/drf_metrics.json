@@ -29,7 +29,7 @@
     "minRows": 10,
     "sampleRate": 0.632
   },
-  "training_time_seconds": 174.01902820000032,
+  "training_time_seconds": 222.60516149999967,
   "train_metrics": {
     "rmse": 4.8165573202096255,
     "mae": 3.0841944736007325,

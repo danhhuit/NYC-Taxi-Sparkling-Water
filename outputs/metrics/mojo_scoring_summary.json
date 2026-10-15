@@ -6,7 +6,8 @@
   "average_prediction": 17.94580270355686,
   "min_prediction": 3.074885815382004,
   "max_prediction": 130.2542919921875,
-  "scoring_time_seconds": 260.5630901000004,
-  "rows_per_second": 31298.765288936782,
-  "h2o_context_used": false
+  "scoring_time_seconds": 338.8614000999987,
+  "rows_per_second": 24066.78068848607,
+  "h2o_context_used": false,
+  "deployment_validation": false
 }

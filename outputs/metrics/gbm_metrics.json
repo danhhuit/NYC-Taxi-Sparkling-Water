@@ -31,7 +31,7 @@
     "colSampleRate": 0.8,
     "seed": 42
   },
-  "training_time_seconds": 44.30143510000016,
+  "training_time_seconds": 25.604312200000095,
   "rmse": 7.466434697589717,
   "mae": 4.619220158935067,
   "r2": 0.7469267216592572

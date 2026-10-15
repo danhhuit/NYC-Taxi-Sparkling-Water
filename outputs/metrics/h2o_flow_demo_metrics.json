@@ -1,0 +1,37 @@
+{
+  "created_at_utc": "2026-10-14T11:51:29.322734+00:00",
+  "cluster": "http://127.0.0.1:54321",
+  "model_id": "nyc_taxi_flow_demo_drf",
+  "algorithm": "DRF",
+  "train_frame": "nyc_taxi_demo_train_200k",
+  "train_rows": 200000,
+  "test_frame": "nyc_taxi_demo_test_50k",
+  "test_rows": 50000,
+  "prediction_frame": "nyc_taxi_flow_demo_predictions_50k",
+  "prediction_rows": 50000,
+  "validation_rmse": 7.555001411426545,
+  "validation_mae": 4.650026655704645,
+  "validation_r2": 0.7437732418096827,
+  "features": [
+    "pickup_location",
+    "dropoff_location",
+    "passenger_count",
+    "pickup_hour",
+    "pickup_day_of_week",
+    "pickup_month",
+    "is_weekend",
+    "route_trip_count",
+    "route_avg_duration",
+    "hour_route_avg_duration"
+  ],
+  "response": "trip_duration_minutes",
+  "parameters": {
+    "ntrees": 30,
+    "max_depth": 12,
+    "min_rows": 20,
+    "sample_rate": 0.8,
+    "mtries": -1,
+    "seed": 42
+  },
+  "note": "Medium-size GUI demonstration metrics; official final-model metrics remain in outputs/metrics/final_model_metrics.json."
+}

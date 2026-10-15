@@ -151,7 +151,7 @@ def main() -> int:
 
     prediction_input = frame[: args.prediction_rows, PREFERRED_FEATURES]
     prediction_frame = model.predict(prediction_input)
-    prediction_frame.set_name(PREDICTION_KEY)
+    prediction_frame = h2o.assign(prediction_frame, PREDICTION_KEY)
     # Forces retrieval of the same model metrics shown by H2O/Flow.
     metrics = model.model_performance(train=True)
 

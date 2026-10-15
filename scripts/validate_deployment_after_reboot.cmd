@@ -23,6 +23,21 @@ if not exist "%LOG_DIR%" mkdir "%LOG_DIR%"
 >> "%KUBERNETES_LOG%" echo Expected Job: %JOB%
 >> "%KUBERNETES_LOG%" echo.
 
+echo [0/8] Checking system-drive free space...
+for /f "usebackq delims=" %%F in (`powershell -NoProfile -Command "[math]::Floor(([System.IO.DriveInfo]::new($env:SystemDrive)).AvailableFreeSpace / 1GB)"`) do set "SYSTEM_FREE_GB=%%F"
+if not defined SYSTEM_FREE_GB (
+    >> "%DOCKER_LOG%" echo BLOCKED: Could not determine free space on %SystemDrive%.
+    echo FAILED: Could not determine free space on %SystemDrive%.
+    exit /b 9
+)
+>> "%DOCKER_LOG%" echo System drive %SystemDrive% free: !SYSTEM_FREE_GB! GB
+if !SYSTEM_FREE_GB! LSS 10 (
+    >> "%DOCKER_LOG%" echo BLOCKED: At least 10 GB free is required for Docker build/image/container data.
+    >> "%DOCKER_LOG%" echo Free space or move Docker Desktop disk image before retrying.
+    echo FAILED: Only !SYSTEM_FREE_GB! GB free on %SystemDrive%; at least 10 GB is required.
+    exit /b 9
+)
+
 echo [1/8] Checking Docker daemon...
 docker version >> "%DOCKER_LOG%" 2>&1
 if errorlevel 1 (
