@@ -18,6 +18,12 @@ if errorlevel 1 (
     exit /b 2
 )
 
+docker exec "%NODE_CONTAINER%" ctr -n k8s.io images check "name==%K8S_IMAGE%" >nul 2>&1
+if not errorlevel 1 (
+    echo Kubernetes image already ready: %K8S_IMAGE%
+    exit /b 0
+)
+
 echo Loading "%IMAGE%" into Docker Desktop Kubernetes containerd...
 echo This image is large; the streaming import can take several minutes.
 docker save "%IMAGE%" | docker exec -i "%NODE_CONTAINER%" ctr -n k8s.io images import -
@@ -26,9 +32,9 @@ if errorlevel 1 (
     exit /b 3
 )
 
-docker exec "%NODE_CONTAINER%" ctr -n k8s.io images list -q | findstr /X /C:"%K8S_IMAGE%" >nul
+docker exec "%NODE_CONTAINER%" ctr -n k8s.io images check "name==%K8S_IMAGE%" >nul 2>&1
 if errorlevel 1 (
-    echo FAILED: Kubernetes containerd does not contain "%K8S_IMAGE%" after import.
+    echo FAILED: Kubernetes containerd does not contain a complete "%K8S_IMAGE%" after import.
     exit /b 4
 )
 

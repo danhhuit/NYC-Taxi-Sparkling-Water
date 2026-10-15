@@ -28,12 +28,22 @@ Cập nhật bằng chứng gần nhất: **15/10/2026**.
 | Structured Streaming | Hoàn tất | 10 micro-batch, 1.000 dòng, 0 prediction null |
 | H2O Flow demo quy mô vừa | Hoàn tất | 200.000 train, 50.000 test, 50.000 prediction |
 | Dashboard local | Hoàn tất | API và dự đoán thực bằng 5 MOJO local |
-| Docker runtime | Chưa xác nhận lần cuối | Dockerfile và script có sẵn; daemon/dung lượng hệ thống còn là điều kiện |
-| Kubernetes runtime | Chưa xác nhận lần cuối | Manifest có sẵn; cần Job đạt trạng thái `Complete` |
+| Docker runtime | Hoàn tất | Container exit code 0; 8.155.303 dòng; 0 prediction null |
+| Kubernetes runtime | Hoàn tất | Job `Complete 1/1`; Pod `Completed`; 0 restart |
 
 Kết quả kiểm tra bốn tiêu chí kỹ thuật được lưu tại
 [`outputs/metrics/technical_validation.json`](outputs/metrics/technical_validation.json).
 File này không chấm phần báo cáo, slide hoặc phối hợp nhóm.
+
+Bằng chứng deployment mới nhất ngày **15/10/2026**:
+
+| Chỉ số | Docker | Kubernetes |
+|---|---:|---:|
+| Dòng được dự đoán | 8.155.303 | 8.155.303 |
+| Prediction null | 0 | 0 |
+| Thời gian scoring | 292,35 giây | 286,99 giây |
+| Throughput | 27.895 dòng/giây | 28.416 dòng/giây |
+| Trạng thái cuối | `DOCKER FINAL VALIDATION SUCCESS` | `KUBERNETES FINAL VALIDATION SUCCESS` |
 
 ## 2. Bài toán và giá trị ứng dụng
 
@@ -104,8 +114,9 @@ PostgreSQL zone_statistics
 | H2O | 3.46.0.6 |
 | Sparkling Water | 3.46.0.6-1-3.5 |
 | PostgreSQL | Môi trường local dùng PostgreSQL 18 |
-| Docker Desktop | Dùng cho image scoring |
-| Kubernetes | Docker Desktop Kubernetes |
+| Docker Engine | 29.8.2 |
+| Kubernetes | Docker Desktop Kubernetes 1.36.1 |
+| Container runtime | containerd 2.3.1 |
 
 Các package Python được khóa trong
 [`requirements.txt`](requirements.txt).
@@ -999,14 +1010,26 @@ deep_learning
 
 ### Trạng thái khách quan
 
-Dockerfile và script validation đã tồn tại. Lần kiểm tra gần nhất chưa có bằng
-chứng runtime cuối cùng vì Docker daemon/dung lượng ổ hệ thống chưa đáp ứng.
-Không xem việc có Dockerfile là bằng chứng container đã chạy thành công.
+Docker image `nyc-taxi-final:1.0` đã được build và container đã chấm toàn bộ
+8.155.303 dòng test. Container kết thúc với exit code `0`, không có prediction
+null và log kết thúc bằng `DOCKER FINAL VALIDATION SUCCESS`.
+
+Kết quả runtime ngày 15/10/2026:
+
+| Chỉ số | Giá trị |
+|---|---:|
+| Dòng được chấm | 8.155.303 |
+| Prediction null | 0 |
+| Prediction trung bình | 17,9458 phút |
+| Prediction nhỏ nhất | 3,0749 phút |
+| Prediction lớn nhất | 130,2543 phút |
+| Thời gian scoring | 292,35 giây |
+| Throughput | 27.895 dòng/giây |
 
 ### Điều kiện
 
 - Docker Desktop đang ở trạng thái Engine running.
-- Ổ hệ thống còn ít nhất 10 GB.
+- Ổ lưu Docker được chọn còn ít nhất 10 GB.
 - `models/final_mojo` tồn tại.
 - `data/processed/batch_input.parquet` tồn tại.
 
@@ -1037,6 +1060,23 @@ outputs/logs/docker_final.log
 
 ## 23. Kubernetes
 
+### Trạng thái đã kiểm chứng
+
+Docker Desktop Kubernetes đã chạy ở chế độ `kind`, node
+`desktop-control-plane` ở trạng thái `Ready`. Job `nyc-taxi-final-job` hoàn tất
+`1/1` trong 5 phút 30 giây; Pod ở trạng thái `Completed`, không restart.
+
+| Chỉ số | Giá trị |
+|---|---:|
+| Kubernetes | 1.36.1 |
+| Container runtime | containerd 2.3.1 |
+| Dòng được chấm | 8.155.303 |
+| Prediction null | 0 |
+| Thời gian scoring | 286,99 giây |
+| Throughput | 28.416 dòng/giây |
+| Job | `Complete 1/1` |
+| Pod | `Completed`, 0 restart |
+
 ### Điều kiện
 
 1. Docker Desktop đang chạy.
@@ -1057,7 +1097,15 @@ Luồng khuyến nghị:
 scripts\validate_deployment_after_reboot.cmd
 ```
 
-Script sẽ:
+Nếu Docker build và container scoring đã thành công nhưng Kubernetes chưa bật,
+sau khi bật Kubernetes có thể dùng lại image hiện có mà không chấm lại toàn bộ
+8.155.303 dòng:
+
+```bat
+scripts\validate_deployment_after_reboot.cmd --kubernetes-only
+```
+
+Ở chế độ đầy đủ, script sẽ:
 
 1. Build Docker image.
 2. Chạy container scoring.
@@ -1067,6 +1115,11 @@ Script sẽ:
 6. Apply `kubernetes/final-job.yaml`.
 7. Chờ tối đa 30 phút.
 8. Lưu log và trạng thái.
+
+Ở chế độ `--kubernetes-only`, script tái sử dụng image
+`nyc-taxi-final:1.0`, kiểm tra image trực tiếp bằng `ctr images check` rồi thực
+hiện từ bước Kubernetes. Chế độ này tránh chạy lại Docker scoring 8.155.303
+dòng khi Docker đã thành công.
 
 Kiểm tra thủ công sau khi apply:
 
@@ -1090,6 +1143,15 @@ outputs/logs/kubernetes_final.log
 ```
 
 ## 24. Kịch bản demo hoàn chỉnh
+
+![Tổng quan pipeline, cấu hình, dữ liệu, mô hình, demo và deployment](outputs/screenshots/project-summary-presentation.png)
+
+Ảnh trên có hai định dạng:
+
+- PNG để chèn nhanh vào PowerPoint/Google Slides:
+  [`project-summary-presentation.png`](outputs/screenshots/project-summary-presentation.png).
+- SVG để trình chiếu sắc nét và chỉnh sửa:
+  [`project-summary-presentation.svg`](outputs/screenshots/project-summary-presentation.svg).
 
 ### Phương án 10–15 phút
 
@@ -1118,8 +1180,9 @@ outputs/logs/kubernetes_final.log
 
 6. **MOJO/Streaming/Deployment** — 2 phút
 
-   Trình bày batch 8.155.303 dòng, streaming 10 batch và trạng thái khách quan
-   của Docker/Kubernetes.
+   Trình bày batch 8.155.303 dòng, streaming 10 batch, Docker exit code `0` và
+   Kubernetes Job `Complete 1/1`. Dùng log/bảng kết quả đã lưu thay vì chạy lại
+   toàn bộ scoring trong buổi thuyết trình.
 
 7. **Kết luận** — 1 phút
 
@@ -1130,7 +1193,7 @@ outputs/logs/kubernetes_final.log
 - Train lại toàn bộ 12 tháng.
 - Import 46,7 triệu dòng vào Flow trên máy thiếu RAM.
 - Chạy Grid Search hoặc AutoML full-data.
-- Tuyên bố Docker/Kubernetes runtime thành công khi chưa có log.
+- Chạy lại Docker/Kubernetes scoring 8.155.303 dòng nếu thời gian demo ngắn.
 - Mô tả các feature lịch sử nhập tay là traffic real-time.
 
 ## 25. Kiểm thử
@@ -1194,6 +1257,8 @@ outputs/charts/error_by_duration_range.png
 
 outputs/screenshots/dashboard.png
 outputs/screenshots/dashboard_dark.png
+outputs/screenshots/project-summary-presentation.png
+outputs/screenshots/project-summary-presentation.svg
 ```
 
 ## 27. Xử lý lỗi thường gặp
@@ -1265,8 +1330,18 @@ trường.
 
 ### Docker thiếu dung lượng
 
-Script yêu cầu tối thiểu 10 GB trống trên ổ hệ thống. Giải phóng dung lượng hoặc
-chuyển Docker disk image trước khi chạy lại.
+Mặc định script kiểm tra ổ hệ thống. Nếu Docker Desktop disk image đã được
+chuyển sang ổ D, cấu hình terminal trước khi chạy:
+
+```bat
+set "NYC_TAXI_DOCKER_STORAGE_DRIVE=D:"
+scripts\validate_deployment_after_reboot.cmd
+```
+
+Biến này chỉ thay đổi ổ được kiểm tra; nó không tự di chuyển dữ liệu Docker.
+Trước đó phải mở Docker Desktop, vào **Settings → Resources → Advanced**,
+chuyển **Disk image location** sang một thư mục trên D, rồi **Apply & Restart**.
+Script vẫn yêu cầu tối thiểu 10 GB trống tại ổ lưu Docker được chọn.
 
 ## 28. Phân công nhóm
 
@@ -1304,7 +1379,8 @@ phải điểm chính thức và không thay thế đánh giá của giảng vi�
 - Route statistics không phải expanding-window nghiêm ngặt trong nội bộ train.
 - Dashboard không có nguồn traffic/weather real-time.
 - Full-data H2O Flow bị giới hạn bởi RAM; demo GUI chuẩn dùng 200k/50k.
-- Docker/Kubernetes chỉ được xem là hoàn tất khi có log runtime thành công.
+- Docker/Kubernetes đã được kiểm chứng trên một node local; chưa benchmark
+  Kubernetes nhiều node hoặc môi trường cloud.
 - GitHub không chứa raw/processed dataset và các model đơn vượt 100 MB.
 
 ## 31. Git và dữ liệu lớn
