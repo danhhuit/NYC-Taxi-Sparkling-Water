@@ -1,6 +1,6 @@
 {
   "model": "H2O AutoML Best Model",
-  "best_model_id": "StackedEnsemble_AllModels_1_AutoML_1_20261015_212116",
+  "best_model_id": "StackedEnsemble_AllModels_1_AutoML_1_20261016_83324",
   "split_strategy": "chronological",
   "full_rows": {
     "train": 34327814,
@@ -29,13 +29,13 @@
   "excluded_algorithms": [
     "XGBoost"
   ],
-  "training_time_seconds": 386.73672250000163,
+  "training_time_seconds": 381.94048509999993,
   "test_metrics": {
-    "rmse": 7.4115132841992315,
-    "mae": 4.632819865556567,
-    "r2": 0.7544088150715625
+    "rmse": 7.478147660326714,
+    "mae": 4.64909073605211,
+    "r2": 0.7479032210410126
   },
-  "rmse": 7.4115132841992315,
-  "mae": 4.632819865556567,
-  "r2": 0.7544088150715625
+  "rmse": 7.478147660326714,
+  "mae": 4.64909073605211,
+  "r2": 0.7479032210410126
 }

@@ -2,8 +2,8 @@
   "maxDepth": 6,
   "learnRate": 0.05,
   "ntrees": 150,
-  "validation_rmse": 7.059750048238548,
-  "validation_mae": 4.395364775978808,
-  "validation_r2": 0.7712571454841239,
-  "training_time_seconds": 84.19575890000124
+  "validation_rmse": 7.032685201472854,
+  "validation_mae": 4.394510646780444,
+  "validation_r2": 0.7725905802301181,
+  "training_time_seconds": 84.67858430000024
 }

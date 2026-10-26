@@ -3,11 +3,11 @@
   "requested_rows": 0,
   "all_input_rows": true,
   "null_predictions": 0,
-  "average_prediction": 17.898741376240515,
-  "min_prediction": 2.1504538547992706,
-  "max_prediction": 132.9027187347412,
-  "scoring_time_seconds": 381.0396297999978,
-  "rows_per_second": 21402.76853691203,
+  "average_prediction": 17.94580270355686,
+  "min_prediction": 3.074885815382004,
+  "max_prediction": 130.2542919921875,
+  "scoring_time_seconds": 380.9719199000001,
+  "rows_per_second": 21406.5724375189,
   "h2o_context_used": false,
   "deployment_validation": false
 }
